@@ -5,7 +5,7 @@ import { WindowManager } from "./window-manager";
 import { MenuManager } from "./menu-manager";
 import { deviceControlManager, StartParams } from "./device-control";
 import { ensureDeviceControlLogin, logout } from "./login-window";
-
+ import { initAutoUpdate } from './auto-update' 
 let windowManager: WindowManager;
 let menuManager: MenuManager;
 let isQuitting = false;
@@ -99,6 +99,10 @@ function setupIPC(): void {
     return sources[0].id;
   });
 }
+
+
+initAutoUpdate()
+
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId("com.electron");

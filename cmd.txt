@@ -49,3 +49,5 @@ venv/Scripts/python -m uvicorn app.main:app --host localhost --port 8642
 venv/Scripts/python -m pip install httpx
 
 find . -type f -exec du -h {} + | sort -hr | head -n 20
+
+git add -A && git commit

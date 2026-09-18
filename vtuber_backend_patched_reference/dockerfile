@@ -1,3 +1,90 @@
+# FROM python:3.10-slim
+
+# ENV DEBIAN_FRONTEND=noninteractive \
+#     PYTHONDONTWRITEBYTECODE=1 \
+#     PYTHONUNBUFFERED=1 \
+#     PIP_NO_CACHE_DIR=1 \
+#     UV_LINK_MODE=copy \
+#     CONFIG_FILE=/app/conf/conf.yaml
+
+# WORKDIR /app
+
+# # Base dependencies
+# RUN apt-get update -o Acquire::Retries=5 \
+#  && apt-get install -y --no-install-recommends \
+#       ffmpeg git curl ca-certificates \
+#  && rm -rf /var/lib/apt/lists/*
+
+# # Install uv
+# COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+# # Install deps (cache-friendly)
+# COPY pyproject.toml uv.lock ./
+# RUN --mount=type=cache,target=/root/.cache/uv \
+#     uv sync --frozen --no-dev
+
+# # Copy source & install project
+# COPY . /app
+# RUN uv pip install --no-deps .
+
+# # Startup script
+# RUN printf '%s\n' \
+#   '#!/usr/bin/env sh' \
+#   'set -eu' \
+#   '' \
+#   'mkdir -p /app/conf /app/models' \
+#   '' \
+#   '# 1) conf.yaml — volume-mounted কপি থাকলে সেটাই প্রায়োরিটি (ব্যবহারকারী' \
+#   '# নিজে কাস্টমাইজ করলে), নাহলে ইমেজের ভেতরেই বেক করা conf.yaml (COPY . /app' \
+#   '# থেকে আসা, রিপো-রুটে যেটা আগে থেকেই আছে) ব্যবহার হবে — কোনো ভলিউম/স্টোরেজ' \
+#   '# ছাড়াই প্রথমবার ডিপ্লয় হবে, exit 1 করে সার্ভিস বন্ধ হবে না।' \
+#   'if [ -f "/app/conf/conf.yaml" ]; then' \
+#   '  echo "Using user-provided (mounted) conf.yaml from /app/conf"' \
+#   '  ln -sf /app/conf/conf.yaml /app/conf.yaml' \
+#   'elif [ -f "/app/conf.yaml" ]; then' \
+#   '  echo "No /app/conf volume mounted -- using conf.yaml baked into the image"' \
+#   'else' \
+#   '  echo "ERROR: conf.yaml is required."' \
+#   '  echo "Please mount your config dir to /app/conf, or bake one into the image"' \
+#   '  exit 1' \
+#   'fi' \
+#   '' \
+#   '# 2) model_dict.json (optional)' \
+#   'if [ -f "/app/conf/model_dict.json" ]; then' \
+#   '  ln -sf /app/conf/model_dict.json /app/model_dict.json' \
+#   'fi' \
+#   '' \
+#   '# 3) live2d-models' \
+#   'if [ -d "/app/conf/live2d-models" ]; then' \
+#   '  rm -rf /app/live2d-models && ln -s /app/conf/live2d-models /app/live2d-models' \
+#   'fi' \
+#   '' \
+#   '# 4) characters' \
+#   'if [ -d "/app/conf/characters" ]; then' \
+#   '  rm -rf /app/characters && ln -s /app/conf/characters /app/characters' \
+#   'fi' \
+#   '' \
+#   '# 5) avatars' \
+#   'if [ -d "/app/conf/avatars" ]; then' \
+#   '  rm -rf /app/avatars && ln -s /app/conf/avatars /app/avatars' \
+#   'fi' \
+#   '' \
+#   '# 6) backgrounds' \
+#   'if [ -d "/app/conf/backgrounds" ]; then' \
+#   '  rm -rf /app/backgrounds && ln -s /app/conf/backgrounds /app/backgrounds' \
+#   'fi' \
+#   '' \
+#   '# 7) start app' \
+#   'exec uv run run_server.py' \
+#   > /usr/local/bin/start-app && chmod +x /usr/local/bin/start-app
+
+# # Volumes   check
+# VOLUME ["/app/conf", "/app/models"]
+
+# EXPOSE 12393
+
+# CMD ["/usr/local/bin/start-app"]
+
 FROM python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -20,7 +107,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 # Install deps (cache-friendly)
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 # Copy source & install project
@@ -77,9 +164,6 @@ RUN printf '%s\n' \
   '# 7) start app' \
   'exec uv run run_server.py' \
   > /usr/local/bin/start-app && chmod +x /usr/local/bin/start-app
-
-# Volumes   check
-VOLUME ["/app/conf", "/app/models"]
 
 EXPOSE 12393
 

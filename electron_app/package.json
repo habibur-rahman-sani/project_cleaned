@@ -1,5 +1,9 @@
 {
   "name": "open-llm-vtuber",
+  "repository": {
+  "type": "git",
+  "url": "https://github.com/habibur-rahman-sani/project_cleaned.git"
+},
   "version": "1.2.1",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
@@ -69,4 +73,5 @@
     "vite": "^5.3.1",
     "vite-plugin-static-copy": "^2.3.1"
   }
+  
 }

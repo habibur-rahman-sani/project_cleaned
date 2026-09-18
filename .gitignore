@@ -1,0 +1,69 @@
+# ============================================================================
+# রুট .gitignore — আগে এই ফাইলটাই ছিল না, তাই `git add -A` করলে venv/,
+# node_modules/, build output, আর configs/*.env-এর real secret সব commit
+# হয়ে যেত। এটাই সবচেয়ে সম্ভাব্য কারণ কেন push/deploy "path মিলছে না" বা
+# আটকে যাচ্ছে মনে হচ্ছিল — রিপো অস্বাভাবিক ভারী/আবর্জনাযুক্ত হয়ে গিয়েছিল।
+#
+# ⚠️ আলাদা নোট (২০২৬-০৯-১৬ অডিট): hermes-agent-main/ ফোল্ডারটাই একা ~১৮৬MB
+# (পুরো upstream Nous Research রিপো — tests/, website/, evals/ সহ, hooবহুই
+# তোমার নিজের কোড না)। .gitignore দিয়ে এটা বাদ দিলে অ্যাপ চলবে না (কোড লাগবে),
+# কিন্তু পুরোটা নিজের রিপোতে vendor/commit করলে GitHub push স্লো/টাইমআউট
+# হওয়ার সম্ভাবনা অনেক বেশি। ভালো সমাধান: hermes-agent-main-কে `git submodule
+# add https://github.com/NousResearch/hermes-agent hermes-agent-main` দিয়ে
+# আলাদা submodule হিসেবে যোগ করা — তাহলে তোমার রিপোতে শুধু একটা commit-hash
+# রেফারেন্স থাকবে, পুরো কোড না। এখানে জোর করে ignore করা হলো না যাতে
+# fresh clone-এ অ্যাপ চালাতে সমস্যা না হয়।
+# ============================================================================
+
+# --- Python venvs (gateway/venv, thin_client/venv) ---
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# --- Node / Electron ---
+node_modules/
+electron_app/dist/
+electron_app/release/
+electron_app/out/
+
+# --- PyInstaller build output (thin_client → .exe) ---
+build/
+dist/
+
+# --- সিক্রেট থাকা .env ফাইল — TEMPLATE (.example) ছাড়া বাকি সব বাদ ---
+# ২০২৬-০৯-১৬ ফিক্স: আগে শুধু রুট আর gateway/.env কভার হতো — hermes-agent-main/.env,
+# .envrc, আর ভবিষ্যতে যেকোনো নতুন সাব-ফোল্ডারের .env এই প্যাটার্নে ধরা পড়ত না।
+# `**/` prefix দিয়ে যেকোনো ডেপথে .env ম্যাচ করানো হচ্ছে, শুধু *.example বাদে।
+**/.env
+**/.env.*
+**/.envrc
+!**/*.env.example
+configs/local.env
+configs/production.env
+!configs/*.env.example
+
+# --- setup_all.sh রানটাইম স্টেট ---
+setup_log.txt
+setup_log.txt.tmp
+.setup_state/
+
+# --- patch ব্যাকআপ (apply_patch.py / apply_computer_use_patch.py বানায়) ---
+*.bak.*
+
+# --- per-user Hermes ডেটা (লোকাল টেস্টে) ---
+# ২০২৬-০৯-১৬ ফিক্স: "data/hermes-home/" (মাঝে স্ল্যাশ থাকায়) শুধু রুট থেকে
+# ম্যাচ করত — আসল ডেটা থাকে hermes-multiuser-stack/gateway/data/hermes-home/
+# এ, যেটা এই প্যাটার্নে ধরাই পড়ত না (ফলে প্রতিটা ইউজারের .env/state.db সহ
+# পুরো profile ফোল্ডার git-এ ট্র্যাক হয়ে যাচ্ছিল)। **/ prefix দিয়ে ফিক্স করা হলো।
+**/data/hermes-home/
+
+# --- vtuber ব্যাকএন্ডের টেস্ট রানে জমা হওয়া চ্যাট হিস্টরি (অন্য ইউজারের রিয়েল
+# ডেটাও থাকতে পারে) — সোর্স কোড না, কমিট করার দরকার নেই ---
+**/chat_history/
+
+# --- OS/IDE ---
+.DS_Store
+.vscode/
+.idea/

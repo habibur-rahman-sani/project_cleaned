@@ -1,0 +1,13 @@
+# Railway এই ফাইলটা রুট থেকে অটো ডিটেক্ট করে। build context = প্রজেক্ট রুট।
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "hermes-multiuser-stack/gateway/Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# পারসিস্টেন্ট ভলিউম Railway ড্যাশবোর্ড থেকে যোগ করো (Settings → Volumes),
+# মাউন্ট পাথ /data/hermes-home — নাহলে redeploy-তে সব ইউজারের মেমরি হারাবে।

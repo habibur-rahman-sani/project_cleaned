@@ -1,0 +1,27 @@
+# শুধু Postgres এখানে ডকারে চলে (local টেস্ট মোডে)। প্রোডাকশনে docker-compose
+# এর দরকারই নেই — ফ্রি ম্যানেজড Postgres (Neon/Supabase, দেখো
+# configs/production.env.example) ব্যবহার করা হয়, DATABASE_URL দিয়েই কানেক্ট হয়।
+#
+# নোট (২০২৬-০৯-১৪ ঠিক করা হয়েছে): আগে এখানে লেখা ছিল "gateway host-এ থাকা
+# লাগবে কারণ computer-use-এর জন্য host-এর আসল GUI/display লাগে" — এটা এখন আর
+# ঠিক না। computer_use_patch/relay_backend.py দিয়ে computer-use কমান্ড এখন
+# নেটওয়ার্কের মাধ্যমে ইউজারের নিজের PC-তে চলা thin_client-এ পাঠানো হয় — GUI/
+# display দরকার হয় thin_client-এর মেশিনে, gateway সার্ভারে না। তাই gateway
+# আসলে সম্পূর্ণ headless কনটেইনারে (Railway, যেকোনো VPS-এর Docker) চালানো যায়
+# — দেখো gateway/Dockerfile ও deploy/ ফোল্ডার।
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hermes
+      POSTGRES_PASSWORD: hermes
+      POSTGRES_DB: hermes_multiuser
+    ports:
+      - "5432:5432"
+    volumes:
+      - hermes_pg_data:/var/lib/postgresql/data
+
+volumes:
+  hermes_pg_data:

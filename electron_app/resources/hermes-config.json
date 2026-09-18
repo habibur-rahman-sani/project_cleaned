@@ -1,0 +1,6 @@
+{
+  "gatewayHttp": "http://localhost:8642",
+  "gatewayWs": "ws://localhost:8642",
+  "vtuberHttp": "http://127.0.0.1:12393",
+  "vtuberWs": "ws://127.0.0.1:12393"
+}

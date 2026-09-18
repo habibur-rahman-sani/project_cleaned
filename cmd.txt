@@ -1,0 +1,51 @@
+source venv/Scripts/activate
+
+cd /workspaces/Noor/REPO_ROOT
+git clone https://github.com/NousResearch/hermes-agent.git hermes-agent-main
+
+cd /workspaces/Noor/REPO_ROOT/hermes-agent-main
+./setup-hermes.sh
+
+source ~/.bashrc   # অথবা যদি zsh ব্যবহার করেন: source ~/.zshrc
+hermes --version   # অথবা which hermes
+
+cd /workspaces/Noor/REPO_ROOT/setup
+bash setup_all.sh local
+
+tail -n 40 /workspaces/Noor/REPO_ROOT/setup_log.txt
+
+
+
+cd /workspaces/Noor/REPO_ROOT
+rm -rf .setup_state setup_log.txt
+rm -rf hermes-multiuser-stack/gateway/venv thin_client/venv
+
+
+python3.11 -m venv hermes-multiuser-stack/gateway/venv
+python3.11 -m venv thin_client/venv
+
+hermes-multiuser-stack/gateway/venv/bin/pip install --upgrade pip
+hermes-multiuser-stack/gateway/venv/bin/pip install cryptography
+
+PATH="/workspaces/Noor/REPO_ROOT/hermes-multiuser-stack/gateway/venv/bin:$PATH" bash setup/setup_all.sh local
+
+df -h /
+du -sh *
+
+docker system prune -a --volumes -f
+rm -rf ~/.cache/uv/ ~/.cache/pip/
+
+xvfb-run npm run dev
+xvfb-run --auto-servernum npx electron-vite dev
+
+bash setup/setup_all.sh local
+bash setup/setup_vtuber_backend.sh
+
+cd hermes-multiuser-stack/gateway &&
+venv/Scripts/python -m uvicorn app.main:app --host localhost --port 8642 --reload
+
+venv/Scripts/python -m uvicorn app.main:app --host localhost --port 8642
+
+venv/Scripts/python -m pip install httpx
+
+find . -type f -exec du -h {} + | sort -hr | head -n 20

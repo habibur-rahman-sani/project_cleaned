@@ -7,13 +7,13 @@
 # স্বাধীন — service_context.py দ্রষ্টব্য) agent_engine নতুন করে বানায়। এর
 # ফলে conf.yaml কখনো ফাইলে লেখা হয় না — সবকিছু মেমরিতে, per-connection।
 
-# env var: HERMES_GATEWAY_URL (ডিফল্ট http://localhost:8642)
+# env var: HERMES_GATEWAY_URL (ডিফল্ট https://projectcleaned-production.up.railway.app)
 # """
 # import os
 # import httpx
 # from loguru import logger
 
-# GATEWAY_URL = os.environ.get("HERMES_GATEWAY_URL", "http://localhost:8642")
+# GATEWAY_URL = os.environ.get("HERMES_GATEWAY_URL", "https://projectcleaned-production.up.railway.app")
 
 
 # async def resolve_user_llm(token: str) -> dict | None:
@@ -82,7 +82,7 @@ connection-এর জন্যই (client_uid-scoped ServiceContext, বাক�
 স্বাধীন — service_context.py দ্রষ্টব্য) agent_engine নতুন করে বানায়। এর
 ফলে conf.yaml কখনো ফাইলে লেখা হয় না — সবকিছু মেমরিতে, per-connection।
 
-env var: HERMES_GATEWAY_URL (ডিফল্ট http://localhost:8642)
+env var: HERMES_GATEWAY_URL (ডিফল্ট https://projectcleaned-production.up.railway.app)
 
 --- NO-SINGLE-USER-FALLBACK FIX (২০২৬-০৯-১৬) ---
 আগে resolve ব্যর্থ হলে apply_user_llm() শুধু False রিটার্ন করত, আর
@@ -106,7 +106,7 @@ from loguru import logger
 
 from .multiuser_history_override import set_current_user_id
 
-GATEWAY_URL = os.environ.get("HERMES_GATEWAY_URL", "http://localhost:8642")
+GATEWAY_URL = os.environ.get("HERMES_GATEWAY_URL", "https://projectcleaned-production.up.railway.app")
 RESOLVE_TIMEOUT_SECONDS = 45.0
 
 

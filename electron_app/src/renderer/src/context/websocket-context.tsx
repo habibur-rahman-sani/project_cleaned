@@ -3,8 +3,8 @@ import React, { useContext, useCallback, useEffect, useRef } from 'react';
 import { wsService } from '@/services/websocket-service';
 import { useLocalStorage } from '@/hooks/utils/use-local-storage';
 
-const DEFAULT_WS_URL = 'ws://127.0.0.1:12393/client-ws';
-const DEFAULT_BASE_URL = 'http://127.0.0.1:12393';
+const DEFAULT_WS_URL = 'wss://authentic-nature-production-8d5f.up.railway.app/client-ws';
+const DEFAULT_BASE_URL = 'https://authentic-nature-production-8d5f.up.railway.app';
 
 export interface HistoryInfo {
   uid: string;

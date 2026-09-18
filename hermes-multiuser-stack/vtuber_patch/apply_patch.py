@@ -123,7 +123,7 @@ def main() -> int:
     apply_edits(routes_py, ROUTES_EDITS)
 
     print("\nএখন run_server.py চালানোর আগে HERMES_GATEWAY_URL env var সেট করো")
-    print("(ডিফল্ট http://localhost:8642, MULTIUSER_PATCH_README_BANGLA.md দ্রষ্টব্য)।")
+    print("(ডিফল্ট https://projectcleaned-production.up.railway.app, MULTIUSER_PATCH_README_BANGLA.md দ্রষ্টব্য)।")
     return 0
 
 

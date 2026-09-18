@@ -210,8 +210,8 @@ Open WebUI 目前即使在 Responses 模式下也在客户端管理对话历史�
 ### 下拉列表中没有模型
 
 - **检查 URL 是否有 `/v1` 后缀**：`http://host.docker.internal:8642/v1`（不只是 `:8642`）
-- **验证 gateway 是否运行**：`curl http://localhost:8642/health` 应返回 `{"status": "ok"}`
-- **检查模型列表**：`curl -H "Authorization: Bearer your-secret-key" http://localhost:8642/v1/models` 应返回包含 `hermes-agent` 的列表
+- **验证 gateway 是否运行**：`curl https://projectcleaned-production.up.railway.app/health` 应返回 `{"status": "ok"}`
+- **检查模型列表**：`curl -H "Authorization: Bearer your-secret-key" https://projectcleaned-production.up.railway.app/v1/models` 应返回包含 `hermes-agent` 的列表
 - **Docker 网络**：在 Docker 内部，`localhost` 指容器本身，而非你的主机。请使用 `host.docker.internal` 或 `--network=host`。
 - **空 Ollama 后端遮挡选择器**：如果你省略了 `ENABLE_OLLAMA_API=false`，Open WebUI 会在你的 Hermes 模型上方显示一个空的 Ollama 区域。请使用 `-e ENABLE_OLLAMA_API=false` 重启容器，或在 **Admin Settings → Connections** 中禁用 Ollama。
 
@@ -289,7 +289,7 @@ hermes -p alice config set API_SERVER_MODEL_NAME "Alice's Agent"
 docker run --add-host=host.docker.internal:host-gateway ...
 
 # 方案 2：使用主机网络
-docker run --network=host -e OPENAI_API_BASE_URL=http://localhost:8642/v1 ...
+docker run --network=host -e OPENAI_API_BASE_URL=https://projectcleaned-production.up.railway.app/v1 ...
 
 # 方案 3：使用 Docker bridge IP
 docker run -e OPENAI_API_BASE_URL=http://172.17.0.1:8642/v1 ...

@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     shared_openrouter_base_url: str = "https://openrouter.ai/api/v1"
     shared_openrouter_model: str = "openrouter/auto"
 
-    gateway_public_url: str = "http://localhost:8642"
+    gateway_public_url: str = "https://projectcleaned-production.up.railway.app"
     cors_origins: str = "*"
 
 

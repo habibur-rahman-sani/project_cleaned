@@ -41,11 +41,11 @@ You'll see:
 
 ### 3. Connect a frontend
 
-Point any OpenAI-compatible client at `http://localhost:8642/v1`:
+Point any OpenAI-compatible client at `https://projectcleaned-production.up.railway.app/v1`:
 
 ```bash
 # Test with curl
-curl http://localhost:8642/v1/chat/completions \
+curl https://projectcleaned-production.up.railway.app/v1/chat/completions \
   -H "Authorization: Bearer change-me-local-dev" \
   -H "Content-Type: application/json" \
   -d '{"model": "hermes-agent", "messages": [{"role": "user", "content": "Hello!"}]}'
@@ -558,12 +558,12 @@ External UIs can manage Hermes sessions over REST without standing up the dashbo
 
 ```bash
 # fork a session and run one turn
-curl -X POST http://localhost:8642/api/sessions/$ID/fork \
+curl -X POST https://projectcleaned-production.up.railway.app/api/sessions/$ID/fork \
   -H "Authorization: Bearer $API_SERVER_KEY" \
   -d '{"title": "explore alt path"}'
 
 # stream a turn over SSE
-curl -N -X POST http://localhost:8642/api/sessions/$ID/chat/stream \
+curl -N -X POST https://projectcleaned-production.up.railway.app/api/sessions/$ID/chat/stream \
   -H "Authorization: Bearer $API_SERVER_KEY" \
   -d '{"input": "what files changed in the last hour?"}'
 ```
@@ -573,11 +573,11 @@ curl -N -X POST http://localhost:8642/api/sessions/$ID/chat/stream \
 `GET /v1/skills` and `GET /v1/toolsets` let external clients enumerate the agent's capabilities deterministically over REST instead of asking the model. Both are read-only and gated by `API_SERVER_KEY`.
 
 ```bash
-curl http://localhost:8642/v1/skills \
+curl https://projectcleaned-production.up.railway.app/v1/skills \
   -H "Authorization: Bearer $API_SERVER_KEY"
 # → [{"name": "github-pr-workflow", "description": "...", "category": "..."}, ...]
 
-curl http://localhost:8642/v1/toolsets \
+curl https://projectcleaned-production.up.railway.app/v1/toolsets \
   -H "Authorization: Bearer $API_SERVER_KEY"
 # → [{"name": "core", "label": "...", "description": "...", "enabled": true,
 #     "configured": true, "tools": ["read_file", "write_file", ...]}, ...]
@@ -718,7 +718,7 @@ Any frontend that supports the OpenAI API format works. Tested/documented integr
 | Jan | 26k | Remote model config |
 | HF Chat-UI | 8k | OPENAI_BASE_URL |
 | big-AGI | 7k | Custom endpoint |
-| OpenAI Python SDK | — | `OpenAI(base_url="http://localhost:8642/v1")` |
+| OpenAI Python SDK | — | `OpenAI(base_url="https://projectcleaned-production.up.railway.app/v1")` |
 | curl | — | Direct HTTP requests |
 
 ## Multi-User Setup with Profiles

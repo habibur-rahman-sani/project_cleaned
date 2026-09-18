@@ -41,11 +41,11 @@ hermes gateway
 
 ### 3. 连接前端
 
-将任何 OpenAI 兼容客户端指向 `http://localhost:8642/v1`：
+将任何 OpenAI 兼容客户端指向 `https://projectcleaned-production.up.railway.app/v1`：
 
 ```bash
 # 使用 curl 测试
-curl http://localhost:8642/v1/chat/completions \
+curl https://projectcleaned-production.up.railway.app/v1/chat/completions \
   -H "Authorization: Bearer change-me-local-dev" \
   -H "Content-Type: application/json" \
   -d '{"model": "hermes-agent", "messages": [{"role": "user", "content": "Hello!"}]}'
@@ -405,7 +405,7 @@ API_SERVER_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 | Jan | 26k | 远程模型配置 |
 | HF Chat-UI | 8k | OPENAI_BASE_URL |
 | big-AGI | 7k | 自定义端点 |
-| OpenAI Python SDK | — | `OpenAI(base_url="http://localhost:8642/v1")` |
+| OpenAI Python SDK | — | `OpenAI(base_url="https://projectcleaned-production.up.railway.app/v1")` |
 | curl | — | 直接 HTTP 请求 |
 
 ## 使用 Profiles 的多用户设置

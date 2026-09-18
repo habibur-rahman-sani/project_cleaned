@@ -2,7 +2,7 @@
 
 Serves /v1/chat/completions, /v1/responses, /v1/models, /v1/capabilities, /api/sessions,
 /v1/runs, /api/jobs and /health* (full table: ``APIServerAdapter._http_route_table``); any
-OpenAI-compatible frontend connects at http://localhost:8642/v1 with API_SERVER_KEY. Under
+OpenAI-compatible frontend connects at https://projectcleaned-production.up.railway.app/v1 with API_SERVER_KEY. Under
 ``gateway.multiplex_profiles`` secondary profiles live at ``/p/<profile>/...``.
 """
 

@@ -170,7 +170,7 @@ cat <<EOF
      $UVICORN_CMD
 
 ২. configs/${MODE}.env-এ যে GATEWAY_PUBLIC_URL দেওয়া আছে সেটা ব্রাউজারে খুলে
-   একটা টেস্ট ইউজার রেজিস্টার করো (local মোডে ডিফল্ট: http://localhost:8642)।
+   একটা টেস্ট ইউজার রেজিস্টার করো (local মোডে ডিফল্ট: https://projectcleaned-production.up.railway.app)।
 
 ৩. থিন ক্লায়েন্ট টেস্ট করো (এই মেশিনেই, GUI লাগবে — sandbox/headless-এ চলবে না):
      cd thin_client

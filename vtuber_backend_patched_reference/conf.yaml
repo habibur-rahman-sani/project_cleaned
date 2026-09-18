@@ -105,7 +105,7 @@ character_config:
 
       # OpenAI Compatible inference backend
       openai_compatible_llm:
-        base_url: 'http://localhost:8642/v1'
+        base_url: 'https://projectcleaned-production.up.railway.app/v1'
         llm_api_key: 'somethingelse'
         organization_id: null
         project_id: null

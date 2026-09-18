@@ -210,8 +210,8 @@ With streaming enabled (the default), you'll see brief inline indicators as tool
 ### No models appear in the dropdown
 
 - **Check the URL has `/v1` suffix**: `http://host.docker.internal:8642/v1` (not just `:8642`)
-- **Verify the gateway is running**: `curl http://localhost:8642/health` should return `{"status": "ok"}`
-- **Check model listing**: `curl -H "Authorization: Bearer your-secret-key" http://localhost:8642/v1/models` should return a list with `hermes-agent`
+- **Verify the gateway is running**: `curl https://projectcleaned-production.up.railway.app/health` should return `{"status": "ok"}`
+- **Check model listing**: `curl -H "Authorization: Bearer your-secret-key" https://projectcleaned-production.up.railway.app/v1/models` should return a list with `hermes-agent`
 - **Docker networking**: From inside Docker, `localhost` means the container, not your host. Use `host.docker.internal` or `--network=host`.
 - **Empty Ollama backend shadowing the picker**: If you omitted `ENABLE_OLLAMA_API=false`, Open WebUI shows an empty Ollama section above your Hermes models. Restart the container with `-e ENABLE_OLLAMA_API=false` or disable Ollama in **Admin Settings → Connections**.
 
@@ -289,7 +289,7 @@ On Linux without Docker Desktop, `host.docker.internal` doesn't resolve by defau
 docker run --add-host=host.docker.internal:host-gateway ...
 
 # Option 2: Use host networking
-docker run --network=host -e OPENAI_API_BASE_URL=http://localhost:8642/v1 ...
+docker run --network=host -e OPENAI_API_BASE_URL=https://projectcleaned-production.up.railway.app/v1 ...
 
 # Option 3: Use Docker bridge IP
 docker run -e OPENAI_API_BASE_URL=http://172.17.0.1:8642/v1 ...

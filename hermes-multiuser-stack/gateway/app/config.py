@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # --- Postgres ---
-    database_url: str = "postgresql://hermes:hermes@localhost:5432/hermes_multiuser"
+    database_url: str = "postgresql://hermes_owner:npg_3oeYjgMQHt1h@ep-holy-scene-b3eercne-pooler.c-4.ap-southeast-1.aws.neon.tech/hermes?sslmode=require&channel_binding=require"
     # Neon/Supabase-এর মতো pooled/pgbouncer কানেকশন (transaction mode) ব্যবহার করলে
     # asyncpg-এর prepared-statement cache বন্ধ করতে হয়, নাহলে "prepared statement
     # already exists" এরর আসে। Neon-এর "-pooler" হোস্টনেম বা Supabase-এর pgbouncer

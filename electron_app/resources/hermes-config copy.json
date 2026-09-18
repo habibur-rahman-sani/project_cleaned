@@ -1,7 +1,6 @@
 {
-  "_comment_bangla": "এখানে তোমার আসল Railway URL বসাও, তারপর npm run build:win চালাও। gatewayHttp/gatewayWs = কম্পিউটার-কন্ট্রোল + লগইন সার্ভিস (hermes-multiuser-stack/gateway)। vtuberHttp/vtuberWs = চ্যাট/ভয়েস/অ্যাভাটার সার্ভিস (vtuber_backend_patched_reference) — এটা Railway-তে আলাদা দ্বিতীয় সার্ভিস হিসেবে ডিপ্লয় করতে হবে, দেখো TEST_AND_DEPLOY_BANGLA.md এর '৫. VTuber চ্যাট ব্যাকএন্ড (দ্বিতীয় Railway সার্ভিস)' অংশ। সব ক্ষেত্রেই http→https, ws→wss (একই ডোমেইন, শুধু স্কিম বদলাবে)।",
-  "gatewayHttp": "https://gateway-production-e512.up.railway.app",
-  "gatewayWs": "wss://gateway-production-e512.up.railway.app",
-  "vtuberHttp": "https://vtuber-production-xxxx.up.railway.app",
-  "vtuberWs": "wss://vtuber-production-xxxx.up.railway.app"
+  "gatewayHttp": "http://localhost:8642",
+  "gatewayWs": "ws://localhost:8642",
+  "vtuberHttp": "http://127.0.0.1:12393",
+  "vtuberWs": "ws://127.0.0.1:12393"
 }

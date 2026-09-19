@@ -1,6 +1,6 @@
 {
-  "gatewayHttp": "https://projectcleaned-production.up.railway.app",
-  "gatewayWs": "ws://localhost:8642",
+  "gatewayHttp": "https://responsible-purpose-production-e6fd.up.railway.app",
+  "gatewayWs": "wss://responsible-purpose-production-e6fd.up.railway.app",
   "vtuberHttp": "http://127.0.0.1:12393",
   "vtuberWs": "ws://127.0.0.1:12393"
 }

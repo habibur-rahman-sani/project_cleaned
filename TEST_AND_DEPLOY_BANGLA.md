@@ -73,7 +73,7 @@ bash setup/setup_all.sh local
 - **লোকাল টেস্টের জন্য একটা প্রি-রিকুইজিট যেটা এই জিপে নাই:** `hermes-agent-main` — এটা bundle করা হয় না (bundle না করার কারণ ইচ্ছাকৃত, দেখো `hermes-multiuser-stack/gateway/Dockerfile`-এর কমেন্ট)। লোকালি টেস্ট করতে হলে এই প্রজেক্ট ফোল্ডারের পাশে (sibling হিসেবে) নিজে `git clone https://github.com/NousResearch/hermes-agent.git hermes-agent-main` করে তারপর ভেতরে ঢুকে `./setup-hermes.sh` চালাও (`hermes` CLI PATH-এ বসানোর জন্য) — তারপরই `setup_all.sh local` ধাপ ১ পাশ করবে। Railway প্রোডাকশন ডিপ্লয়ে এটা লাগে না, Docker বিল্ডের ভেতরেই অটো `git clone` হয়ে যায়।
 - ব্যর্থ হলে ঠিক কোন ধাপে থেমেছে টার্মিনালে দেখাবে; `tail -n 40 setup_log.txt` দিয়ে বিস্তারিত এরর
 - আবার চালালে যা আগেই সফল হয়েছিল স্কিপ হয়ে যাবে (idempotent)
-- সফল হলে gateway লোকালি `https://projectcleaned-production.up.railway.app` এ চলবে — `curl https://projectcleaned-production.up.railway.app/health` দিয়ে চেক করো
+- সফল হলে gateway লোকালি `https://responsible-purpose-production-e6fd.up.railway.app` এ চলবে — `curl https://responsible-purpose-production-e6fd.up.railway.app/health` দিয়ে চেক করো
 
 ## ২. RAILWAY PRODUCTION — GitHub push-ই একমাত্র কমান্ড
 
@@ -109,7 +109,7 @@ npm run dev
 ```
 
 - `resources/hermes-config.json`-এ gateway URL ঠিক আছে কিনা দেখো (dev-এ লোকাল
-  gateway টেস্ট করতে চাইলে `https://projectcleaned-production.up.railway.app` / `ws://localhost:8642`)
+  gateway টেস্ট করতে চাইলে `https://responsible-purpose-production-e6fd.up.railway.app` / `ws://localhost:8642`)
 - অ্যাপ খুললেই ছোট নেটিভ লগইন উইন্ডো আসবে (`login-window.ts`) — username/password
   দিলে সেই token দিয়ে device-control সাবপ্রসেস (thin_client) অটো-স্টার্ট হয়, **আর
   একই লগইন চ্যাট/ভয়েস/অ্যাভাটার উইন্ডোকেও অটোমেটিক সঠিক vtuber ব্যাকএন্ডে

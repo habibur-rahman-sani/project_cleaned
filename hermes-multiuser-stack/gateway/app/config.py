@@ -59,7 +59,7 @@
 #     # ওয়েব টেস্ট পেজ (static/index.html) থেকে রেজিস্টার করতে চাইলে REQUIRE_DEVICE_ID=false দাও।
 #     require_device_id: bool = True
 
-#     gateway_public_url: str = "https://projectcleaned-production.up.railway.app"
+#     gateway_public_url: str = "https://responsible-purpose-production-e6fd.up.railway.app"
 #     cors_origins: str = "*"
 
 

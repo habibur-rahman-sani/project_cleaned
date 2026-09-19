@@ -11,7 +11,7 @@
 #
 # ব্যবহার:
 #   bash setup/setup_vtuber_backend.sh
-# (gateway অবশ্যই আগে থেকে চলতে হবে — https://projectcleaned-production.up.railway.app, setup_all.sh
+# (gateway অবশ্যই আগে থেকে চলতে হবে — https://responsible-purpose-production-e6fd.up.railway.app, setup_all.sh
 #  এর "১. Gateway চালাও" ধাপ দেখো — নাহলে এই ব্যাকএন্ড চালু হবে ঠিকই, কিন্তু
 #  প্রতিটা ইউজারের চ্যাটে "এই ইউজারের Hermes এন্ডপয়েন্ট পাওয়া যায়নি" এরর দেখাবে)
 # ============================================================================
@@ -42,7 +42,7 @@ fi
 
 # --- ২. gateway URL — যেখান থেকে প্রতিটা কানেকশন এই ইউজারের নিজস্ব Hermes
 #        এন্ডপয়েন্ট রিজলভ করবে (routes/vtuber.py এর /vtuber/resolve) ---
-export HERMES_GATEWAY_URL="${HERMES_GATEWAY_URL:-https://projectcleaned-production.up.railway.app}"
+export HERMES_GATEWAY_URL="${HERMES_GATEWAY_URL:-https://responsible-purpose-production-e6fd.up.railway.app}"
 echo "HERMES_GATEWAY_URL=$HERMES_GATEWAY_URL"
 
 # --- ৩. dependencies + রান ---

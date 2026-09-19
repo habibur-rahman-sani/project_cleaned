@@ -1,9 +1,0 @@
-# vtuber সার্ভিসের নিজস্ব Railway কনফিগ (রুটের railway.toml শুধু gateway-র জন্য)।
-# Service Settings → Config as Code path = /vtuber_backend_patched_reference/railway.toml
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "dockerfile"
-
-[deploy]
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 5

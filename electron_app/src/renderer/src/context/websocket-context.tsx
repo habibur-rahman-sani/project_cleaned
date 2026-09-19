@@ -5,10 +5,10 @@ import { useLocalStorage } from '@/hooks/utils/use-local-storage';
 
 // const DEFAULT_WS_URL = 'wss://authentic-nature-production-8d5f.up.railway.app/client-ws';
 // const DEFAULT_BASE_URL = 'https://authentic-nature-production-8d5f.up.railway.app';
-// const DEFAULT_WS_URL = 'wss://projectcleaned-production-13e7.up.railway.app/client-ws';
-// const DEFAULT_BASE_URL = 'https://projectcleaned-production-13e7.up.railway.app';
-const DEFAULT_WS_URL = 'wss://responsible-purpose-production-e6fd.up.railway.app';
-const DEFAULT_BASE_URL = 'https://responsible-purpose-production-e6fd.up.railway.app';
+const DEFAULT_WS_URL = 'wss://projectcleaned-production-13e7.up.railway.app/client-ws';
+const DEFAULT_BASE_URL = 'https://projectcleaned-production-13e7.up.railway.app';
+// const DEFAULT_WS_URL = 'wss://responsible-purpose-production-e6fd.up.railway.app';
+// const DEFAULT_BASE_URL = 'https://responsible-purpose-production-e6fd.up.railway.app';
 
 export interface HistoryInfo {
   uid: string;

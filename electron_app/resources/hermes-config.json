@@ -1,7 +1,6 @@
 {
-  "_comment_bangla": "আসল Railway URL বসানো হয়ে গেছে। gatewayHttp/gatewayWs = hermes-multiuser-stack/gateway সার্ভিস। vtuberHttp/vtuberWs = vtuber_backend_patched_reference সার্ভিস (আলাদা দ্বিতীয় Railway সার্ভিস)। URL বদলালে (redeploy/নতুন ডোমেইন) এই ফাইলটা আপডেট করে আবার commit + push করতে হবে।",
-  "gatewayHttp": "https://projectcleaned-production.up.railway.app",
-  "gatewayWs": "wss://projectcleaned-production.up.railway.app",
-  "vtuberHttp": "https://authentic-nature-production-8d5f.up.railway.app",
-  "vtuberWs": "wss://authentic-nature-production-8d5f.up.railway.app"
+  "gatewayHttp": "https://responsible-purpose-production-e6fd.up.railway.app",
+  "gatewayWs": "wss://responsible-purpose-production-e6fd.up.railway.app",
+  "vtuberHttp": "https://projectcleaned-production-13e7.up.railway.app",
+  "vtuberWs": "wss://projectcleaned-production-13e7.up.railway.app"
 }

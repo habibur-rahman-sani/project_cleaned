@@ -15,8 +15,8 @@ interface GatewayConfig {
 // টেস্টের জন্য সুবিধাজনক, কিন্তু production build-এ অবশ্যই hermes-config.json
 // এ আসল URL বসিয়ে দিতে হবে)।
 const DEFAULT_GATEWAY: GatewayConfig = {
-  gatewayHttp: 'https://projectcleaned-production.up.railway.app',
-  gatewayWs: 'wss://projectcleaned-production.up.railway.app',
+  gatewayHttp: 'https://responsible-purpose-production-e6fd.up.railway.app',
+  gatewayWs: 'wss://responsible-purpose-production-e6fd.up.railway.app',
 }
 
 // vtuber (চ্যাট/ভয়েস/অ্যাভাটার) ব্যাকএন্ড gateway-র থেকে আলাদা সার্ভিস —
@@ -25,8 +25,8 @@ const DEFAULT_GATEWAY: GatewayConfig = {
 // (dev-এ vtuber ব্যাকএন্ড লোকালি setup/setup_vtuber_backend.sh দিয়ে চালালে
 // আলাদা কিছু সেট করতে হবে না)।
 const DEFAULT_VTUBER: VtuberConfig = {
-  vtuberHttp: 'https://authentic-nature-production-8d5f.up.railway.app',
-  vtuberWs: 'wss://authentic-nature-production-8d5f.up.railway.app',
+  vtuberHttp: 'https://projectcleaned-production-13e7.up.railway.app',
+  vtuberWs: 'wss://projectcleaned-production-13e7.up.railway.app',
 }
 
 function readHermesConfig(): GatewayConfig & VtuberConfig {

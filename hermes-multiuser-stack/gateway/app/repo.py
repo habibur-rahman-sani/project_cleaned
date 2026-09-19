@@ -8,23 +8,41 @@ from .db import get_pool
 
 # ---------- users ----------
 
-async def create_user(username: str, password_hash: str, email: Optional[str] = None):
+async def create_user(
+    username: str,
+    password_hash: str,
+    email: Optional[str] = None,
+    register_device_id: Optional[str] = None,
+):
     pool = get_pool()
     row = await pool.fetchrow(
         """
-        INSERT INTO users (username, email, password_hash)
-        VALUES ($1, $2, $3)
+        INSERT INTO users (username, email, password_hash, register_device_id)
+        VALUES ($1, $2, $3, $4)
         RETURNING id, username, email, is_admin, created_at
         """,
-        username, email, password_hash,
+        username, email, password_hash, register_device_id,
     )
     return dict(row)
 
 
 async def get_user_by_username(username: str):
+    """কেস-ইনসেনসিটিভ — "Rahim" আর "rahim" একই ইউজার (নাহলে একই নামে বড়/ছোট হাতের অক্ষর
+    বদলে অসংখ্য অ্যাকাউন্ট খোলা যেত)। হুবহু মিল থাকলে সেটাকেই আগে ধরা হয়।"""
     pool = get_pool()
-    row = await pool.fetchrow("SELECT * FROM users WHERE username = $1", username)
+    row = await pool.fetchrow(
+        "SELECT * FROM users WHERE lower(username) = lower($1) "
+        "ORDER BY (username = $1) DESC LIMIT 1",
+        username,
+    )
     return dict(row) if row else None
+
+
+async def count_users_by_device(device_id: str) -> int:
+    pool = get_pool()
+    return await pool.fetchval(
+        "SELECT count(*) FROM users WHERE register_device_id = $1", device_id
+    )
 
 
 async def get_user_by_id(user_id: str):

@@ -20,8 +20,9 @@
  */
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
 import { existsSync } from 'fs'
-import { join } from 'path'
+import { dirname, join } from 'path'
 import { app } from 'electron'
+import { resolveResource } from './resource-path'
 
 export type DeviceControlStatus =
   | { event: 'started'; username?: string }
@@ -62,9 +63,11 @@ export class DeviceControlManager {
 
   /** প্যাকেজড .exe (production) নাকি dev-মোড python3 সোর্স — কোনটা চালাতে হবে ঠিক করে। */
   private resolveCommand(): { cmd: string; args: string[]; cwd: string } | null {
-    const packagedExe = join(process.resourcesPath, 'thin_client', 'HermesControl.exe')
-    if (app.isPackaged && existsSync(packagedExe)) {
-      return { cmd: packagedExe, args: [], cwd: join(process.resourcesPath, 'thin_client') }
+    // প্যাকেজড বিল্ডে exe আসলে app.asar.unpacked/resources/ এর ভেতরে থাকে
+    // (resource-path.ts দ্রষ্টব্য) — শুধু process.resourcesPath দেখলে পাওয়া যেত না।
+    const packagedExe = resolveResource('thin_client', 'HermesControl.exe')
+    if (app.isPackaged && packagedExe) {
+      return { cmd: packagedExe, args: [], cwd: dirname(packagedExe) }
     }
     if (!app.isPackaged) {
       // dev মোড: প্রজেক্ট রুটের পাশে thin_client/agent.py ধরে নেওয়া হচ্ছে।

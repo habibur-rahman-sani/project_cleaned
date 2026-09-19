@@ -21,7 +21,7 @@
  * UI না থাকলেও autoInstallOnAppQuit থাকায় নিঃশব্দে পরের রিস্টার্টেই বসে যাবে)।
  */
 import { autoUpdater } from 'electron-updater'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000 // ৪ ঘণ্টা পরপর আবার চেক করবে
 
@@ -50,6 +50,23 @@ export function initAutoUpdate(): void {
 
   autoUpdater.on('update-downloaded', (info) => {
     broadcast('hermes-update:downloaded', { version: info.version })
+
+    // উইন্ডোর X চাপলে অ্যাপ শুধু ট্রেতে লুকায়, বন্ধ হয় না — তাই autoInstallOnAppQuit-এ
+    // আপডেট কখনো বসতই না। ইউজারকে সরাসরি জিজ্ঞেস করি।
+    dialog
+      .showMessageBox({
+        type: 'info',
+        buttons: ['এখনই রিস্টার্ট করো', 'পরে'],
+        defaultId: 0,
+        cancelId: 1,
+        title: 'নতুন আপডেট প্রস্তুত',
+        message: `নতুন ভার্সন ${info.version} ডাউনলোড হয়েছে।`,
+        detail: 'এখন রিস্টার্ট করলে আপডেট ইনস্টল হয়ে অ্যাপ আবার চালু হবে।',
+      })
+      .then(({ response }) => {
+        if (response === 0) autoUpdater.quitAndInstall()
+      })
+      .catch((err) => console.error('[auto-update] dialog failed:', err))
   })
 
   autoUpdater.on('error', (err) => {

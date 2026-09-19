@@ -145,17 +145,23 @@ class WebSocketService {
     }
 
     try {
-      this.ws = new WebSocket(url);
+      const socket = new WebSocket(url);
+      this.ws = socket;
       this.currentState = 'CONNECTING';
       this.stateSubject.next('CONNECTING');
 
-      this.ws.onopen = () => {
+      // পুরনো (disconnect() করা) সকেটের দেরিতে আসা onclose/onerror যেন নতুন সকেটের
+      // স্টেট "CLOSED" করে না দেয় — reconnect করার সময় UI ভুল করে Disconnected
+      // দেখাত।
+      socket.onopen = () => {
+        if (this.ws !== socket) return;
         this.currentState = 'OPEN';
         this.stateSubject.next('OPEN');
         this.initializeConnection();
       };
 
-      this.ws.onmessage = (event) => {
+      socket.onmessage = (event) => {
+        if (this.ws !== socket) return;
         try {
           const message = JSON.parse(event.data);
           this.messageSubject.next(message);
@@ -169,12 +175,16 @@ class WebSocketService {
         }
       };
 
-      this.ws.onclose = () => {
+      socket.onclose = (event) => {
+        if (this.ws !== socket) return;
+        console.warn('[ws] closed', event.code, event.reason);
         this.currentState = 'CLOSED';
         this.stateSubject.next('CLOSED');
       };
 
-      this.ws.onerror = () => {
+      socket.onerror = (event) => {
+        if (this.ws !== socket) return;
+        console.error('[ws] error', event);
         this.currentState = 'CLOSED';
         this.stateSubject.next('CLOSED');
       };
@@ -207,8 +217,11 @@ class WebSocketService {
   }
 
   disconnect() {
-    this.ws?.close();
-    this.ws = null;
+    const socket = this.ws;
+    this.ws = null; // আগে null — যাতে উপরের onclose গার্ড পুরনো সকেটকে উপেক্ষা করে
+    socket?.close();
+    this.currentState = 'CLOSED';
+    this.stateSubject.next('CLOSED');
   }
 
   getCurrentState() {

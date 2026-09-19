@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS users (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- রেজিস্ট্রেশনের সময় কোন কম্পিউটার (অ্যাপের hashed device_id) থেকে অ্যাকাউন্ট খোলা হয়েছিল —
+-- এক কম্পিউটার থেকে সর্বোচ্চ কয়টা অ্যাকাউন্ট খোলা যাবে সেটা গুনতে ব্যবহার হয়।
+ALTER TABLE users ADD COLUMN IF NOT EXISTS register_device_id TEXT;
+CREATE INDEX IF NOT EXISTS idx_users_register_device ON users (register_device_id);
+
 -- প্রতিটা ইউজারের নিজস্ব LLM পছন্দ: নিজের API key দিবে, নাকি শেয়ার্ড OpenRouter ব্যবহার করবে
 -- (এই টেবিলটা শুধু "ব্রেইন" (Hermes) যেই LLM কল করে সেটার জন্য; UI-TARS/computer-use
 --  আলাদা বিষয়, ওটা আপনি নিজে হ্যান্ডল করছেন — এই স্ট্যাক সেটাতে হাত দেয় না)

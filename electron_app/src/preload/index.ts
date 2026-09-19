@@ -62,6 +62,9 @@ const api = {
   setMode: (mode: 'window' | 'pet') => {
     ipcRenderer.send('pre-mode-changed', mode);
   },
+  logout: () => {
+    ipcRenderer.send('hermes-logout');
+  },
   getConfigFiles: () => ipcRenderer.invoke('get-config-files'),
   updateConfigFiles: (files: ConfigFile[]) => {
     ipcRenderer.send('update-config-files', files);

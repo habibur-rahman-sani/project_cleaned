@@ -1,5 +1,6 @@
 from typing import Optional, Literal
 
+import asyncpg
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -11,8 +12,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 class RegisterBody(BaseModel):
     username: str = Field(min_length=3, max_length=32)
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=128)
     email: Optional[str] = None
+    # Electron অ্যাপ এই কম্পিউটারের hashed আইডি পাঠায় (main/device-id.ts) — এক কম্পিউটারে
+    # কয়টা অ্যাকাউন্ট খোলা যাবে সেটা সীমিত করতে।
+    device_id: Optional[str] = Field(default=None, min_length=16, max_length=128)
 
 
 class LoginBody(BaseModel):
@@ -29,11 +33,32 @@ class TokenOut(BaseModel):
 
 @router.post("/register", response_model=TokenOut)
 async def register(body: RegisterBody):
-    existing = await repo.get_user_by_username(body.username)
+    username = body.username.strip()
+    if len(username) < 3:
+        raise HTTPException(400, "Username কমপক্ষে ৩ অক্ষরের হতে হবে")
+
+    existing = await repo.get_user_by_username(username)
     if existing:
         raise HTTPException(400, "এই username আগে থেকেই আছে")
+
+    # --- এক কম্পিউটার = সীমিত অ্যাকাউন্ট (অপব্যবহার/একাধিক ফ্রি অ্যাকাউন্ট ঠেকাতে) ---
+    if body.device_id:
+        used = await repo.count_users_by_device(body.device_id)
+        if used >= settings.max_accounts_per_device:
+            raise HTTPException(
+                403,
+                f"এই কম্পিউটার থেকে সর্বোচ্চ {settings.max_accounts_per_device}টা অ্যাকাউন্ট "
+                "খোলা যায় — আগের কোনো অ্যাকাউন্টে লগইন করুন",
+            )
+    elif settings.require_device_id:
+        raise HTTPException(400, "অ্যাপটি আপডেট করুন — এই ভার্সন থেকে রেজিস্ট্রেশন করা যাবে না")
+
     password_hash = auth.hash_password(body.password)
-    user = await repo.create_user(body.username, password_hash, body.email)
+    try:
+        user = await repo.create_user(username, password_hash, body.email, body.device_id)
+    except asyncpg.UniqueViolationError:
+        # একই সময়ে দুইবার রেজিস্টার চাপলে (race) আগে 500 হতো
+        raise HTTPException(400, "এই username বা email আগে থেকেই আছে")
     token = auth.create_access_token(str(user["id"]))
     return TokenOut(access_token=token, user_id=str(user["id"]), username=user["username"])
 

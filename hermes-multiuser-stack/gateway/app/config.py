@@ -9,7 +9,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # --- Postgres ---
-    database_url: str = "postgresql://hermes_owner:npg_3oeYjgMQHt1h@ep-holy-scene-b3eercne-pooler.c-4.ap-southeast-1.aws.neon.tech/hermes?sslmode=require&channel_binding=require"
+    # ⚠️ নিরাপত্তা: আগে এখানে আসল Neon ইউজারনেম/পাসওয়ার্ডসহ URL ডিফল্ট হিসেবে লেখা ছিল (সোর্সে
+    # ফাঁস)। এখন ডিফল্ট ফাঁকা — DATABASE_URL অবশ্যই env var (Railway Variables / .env) দিয়ে দিতে হবে।
+    database_url: str = ""
     # Neon/Supabase-এর মতো pooled/pgbouncer কানেকশন (transaction mode) ব্যবহার করলে
     # asyncpg-এর prepared-statement cache বন্ধ করতে হয়, নাহলে "prepared statement
     # already exists" এরর আসে। Neon-এর "-pooler" হোস্টনেম বা Supabase-এর pgbouncer
@@ -48,6 +50,14 @@ class Settings(BaseSettings):
     shared_openrouter_key: str = ""
     shared_openrouter_base_url: str = "https://openrouter.ai/api/v1"
     shared_openrouter_model: str = "openrouter/auto"
+
+    # --- অ্যাকাউন্ট সীমা (টাকা-পয়সা/শেয়ার্ড LLM key-র অপব্যবহার ঠেকাতে) ---
+    # এক কম্পিউটার (Electron অ্যাপের device_id) থেকে সর্বোচ্চ কতগুলো অ্যাকাউন্ট রেজিস্টার করা যাবে।
+    # 1 = কঠোর "এক কম্পিউটার এক অ্যাকাউন্ট"। env: MAX_ACCOUNTS_PER_DEVICE
+    max_accounts_per_device: int = 3
+    # true হলে device_id ছাড়া রেজিস্ট্রেশন বাতিল (শুধু অ্যাপ থেকেই রেজিস্টার করা যাবে)।
+    # ওয়েব টেস্ট পেজ (static/index.html) থেকে রেজিস্টার করতে চাইলে REQUIRE_DEVICE_ID=false দাও।
+    require_device_id: bool = True
 
     gateway_public_url: str = "https://projectcleaned-production.up.railway.app"
     cors_origins: str = "*"

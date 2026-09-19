@@ -38,6 +38,11 @@ function setupDeviceControlIPC(): void {
 function setupIPC(): void {
   ipcMain.handle("get-platform", () => process.platform);
 
+  // উইন্ডোর টাইটেল-বারের "Logout" বাটন থেকে (আগে শুধু ট্রে মেনুতেই ছিল)
+  ipcMain.on("hermes-logout", () => {
+    logout();
+  });
+
   ipcMain.on("set-ignore-mouse-events", (_event, ignore: boolean) => {
     const window = windowManager.getWindow();
     if (window) {

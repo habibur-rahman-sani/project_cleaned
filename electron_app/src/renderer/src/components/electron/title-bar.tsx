@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, IconButton } from '@chakra-ui/react';
 import {
-  FiMinus, FiMaximize2, FiMinimize2, FiX, FiChevronsDown,
+  FiMinus, FiMaximize2, FiMinimize2, FiX, FiChevronsDown, FiLogOut,
 } from 'react-icons/fi';
 import { layoutStyles } from '@/layout';
 
@@ -48,6 +48,14 @@ function TitleBar(): JSX.Element {
     return <FiMaximize2 />;
   };
 
+  // Logout / অ্যাকাউন্ট বদল: সেভ করা লগইন মুছে নতুন করে লগইন/রেজিস্টার উইন্ডো খোলে।
+  const handleLogout = () => {
+    // eslint-disable-next-line no-alert
+    if (window.confirm('লগআউট করে অন্য অ্যাকাউন্টে যেতে চান?')) {
+      (window as any).api?.logout(); // eslint-disable-line @typescript-eslint/no-explicit-any
+    }
+  };
+
   if (isMac) {
     return (
       <Box {...layoutStyles.macTitleBar}>
@@ -64,6 +72,14 @@ function TitleBar(): JSX.Element {
         Open LLM VTuber
       </Box>
       <Box {...layoutStyles.titleBarButtons}>
+        <IconButton
+          {...layoutStyles.titleBarButton}
+          onClick={handleLogout}
+          aria-label="Logout"
+          title="Logout / অ্যাকাউন্ট বদলাও"
+        >
+          <FiLogOut />
+        </IconButton>
         <IconButton
           {...layoutStyles.titleBarButton}
           onClick={() => window.electron?.ipcRenderer.send('window-minimize')}

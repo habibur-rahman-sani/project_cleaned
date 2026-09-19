@@ -292,8 +292,41 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
   }, [aiState, addAudioTask, appendHumanMessage, baseUrl, bgUrlContext, setAiState, setConfName, setConfUid, setConfigFiles, setCurrentHistoryUid, setHistoryList, setMessages, setModelInfo, setSubtitleText, startMic, stopMic, setSelfUid, setGroupMembers, setIsOwner, backendSynthComplete, setBackendSynthComplete, clearResponse, handleControlMessage, appendOrUpdateToolCallMessage, interrupt, setBrowserViewData, t]);
 
   useEffect(() => {
+    // Electron অ্যাপে token ছাড়া URL-এ কানেক্ট করা অর্থহীন (সার্ভার রিজেক্ট করে) —
+    // লগইনের identity আসার অপেক্ষা করি, শুরুতেই এরর টোস্ট দেখানো এড়াতে।
+    const isElectronApp = !!(window as any).api?.hermesChat;
+    if (isElectronApp && !wsUrl.includes('token=')) return;
     wsService.connect(wsUrl);
   }, [wsUrl]);
+
+  // ---- লগইনের পর অটো-কানেক্ট (main/chat-identity.ts থেকে পুশ করা identity) ----
+  // আগে এই লজিকটা শুধু websocket-context.tsx-এর WebSocketProvider-এ ছিল, কিন্তু
+  // App.tsx সেই Provider ব্যবহারই করে না (WebSocketHandler-ই context দেয়) — তাই
+  // লগইনের পর wsUrl-এ কখনো ?token=... বসত না, আর vtuber ব্যাকএন্ড token ছাড়া
+  // কানেকশন সরাসরি রিজেক্ট করে দেয় → চ্যাট সবসময় "Disconnected"।
+  // wsUrl বদলালে উপরের useEffect নিজেই নতুন করে connect করে, তাই এখানে আলাদা
+  // connect() ডাকা হয় না (ডাবল-কানেক্ট এড়াতে)।
+  useEffect(() => {
+    const api = (window as any).api;
+    if (!api?.hermesChat) return undefined;
+
+    const applyIdentity = (
+      identity: { wsUrl: string; baseUrl: string; username: string } | null,
+    ) => {
+      if (!identity) {
+        // লগআউট — আগের ইউজারের সেশন থেকে সংযোগ বিচ্ছিন্ন
+        wsService.disconnect();
+        return;
+      }
+      setBaseUrl(identity.baseUrl);
+      setWsUrl(identity.wsUrl);
+    };
+
+    api.hermesChat.getIdentity().then(applyIdentity).catch(() => {});
+    const cleanup = api.hermesChat.onIdentity(applyIdentity);
+    return cleanup;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const stateSubscription = wsService.onStateChange(setWsState);

@@ -83,62 +83,94 @@
 // let ipcRegistered = false
 // let loginWindowRef: BrowserWindow | null = null
 
-// function registerIpcOnce(config: GatewayConfig & VtuberConfig): void {
-//   if (ipcRegistered) return
-//   ipcRegistered = true
+// const AUTH_TIMEOUT_MS = 25_000
 
-//   ipcMain.handle(
-//     'hermes-login:submit',
-//     async (_event, creds: { username: string; password: string }) => {
-//       try {
-//         const res = await fetch(`${config.gatewayHttp}/auth/login`, {
-//           method: 'POST',
-//           headers: { 'Content-Type': 'application/json' },
-//           body: JSON.stringify({ username: creds.username, password: creds.password }),
-//         })
+/**
+ * gateway-র /auth/login বা /auth/register-এ POST করে সফল হলে onAuthSuccess() চালায়।
+ *
+ * - Node-এর fetch-এর বদলে Electron-এর net.fetch: Chromium-এর নেটওয়ার্ক স্ট্যাক ব্যবহার
+ *   করে, তাই Windows-এর সিস্টেম proxy/সার্টিফিকেট স্টোর/অ্যান্টিভাইরাস HTTPS ইন্টারসেপশন
+ *   মেনে চলে (Node fetch এগুলো মানে না — "fetch failed" এর একটা সাধারণ কারণ)।
+ * - ২৫ সেকেন্ড timeout: সার্ভার সাড়া না দিলে বাটন চিরকাল "লগইন হচ্ছে..." এ আটকে থাকত।
+ * - সার্ভারের আসল error detail (যেমন "এই username আগে থেকেই আছে") ইউজারকে দেখানো হয়।
+ */
+async function authRequest(
+  config: GatewayConfig & VtuberConfig,
+  path: '/auth/login' | '/auth/register',
+  creds: { username: string; password: string },
+): Promise<{ ok: boolean; error?: string }> {
+  const url = `${config.gatewayHttp}${path}`
+  try {
+    // রেজিস্ট্রেশনে এই কম্পিউটারের hashed device_id পাঠানো হয় (এক কম্পিউটারে অ্যাকাউন্ট সীমা)
+    const payload: Record<string, string> = {
+      username: creds.username,
+      password: creds.password,
+    }
+    if (path === '/auth/register') payload.device_id = await getDeviceId()
 
-//         if (!res.ok) {
-//           const msg =
-//             res.status === 401 ? 'ভুল username অথবা password' : `সার্ভার এরর (HTTP ${res.status})`
-//           return { ok: false, error: msg }
-//         }
+    const res = await net.fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
+    })
 
-//         const data = (await res.json()) as { access_token: string; username: string }
-//         const identity: SavedIdentity = {
-//           username: data.username,
-//           accessToken: data.access_token,
-//           gatewayHttp: config.gatewayHttp,
-//           gatewayWs: config.gatewayWs,
-//         }
+    if (!res.ok) {
+      let detail = ''
+      try {
+        const body = (await res.json()) as { detail?: unknown }
+        if (typeof body.detail === 'string') detail = body.detail
+        else if (Array.isArray(body.detail)) {
+          // FastAPI validation error (422): কোন ফিল্ডে সমস্যা সেটা দেখাই
+          detail = body.detail
+            .map((d: { loc?: unknown[]; msg?: string }) => `${d.loc?.slice(-1)[0] ?? ''}: ${d.msg ?? ''}`)
+            .join('; ')
+        }
+      } catch {
+        // JSON না হলে নিচের জেনেরিক মেসেজই থাকবে
+      }
+      const fallback =
+        res.status === 401 ? 'ভুল username অথবা password' : `সার্ভার এরর (HTTP ${res.status})`
+      const msg = detail ? `${detail} (HTTP ${res.status})` : fallback
+      console.error(`[auth] ${path} → HTTP ${res.status} ${detail}`)
+      return { ok: false, error: msg }
+    }
 
-//         saveIdentity(identity)
-//         deviceControlManager.start({
-//           gatewayHttp: identity.gatewayHttp,
-//           gatewayWs: identity.gatewayWs,
-//           accessToken: identity.accessToken,
-//           username: identity.username,
-//         })
-//         // চ্যাট/ভয়েস/অ্যাভাটার উইন্ডোকে (renderer) নিজে থেকেই এই ইউজারের
-//         // vtuber ব্যাকএন্ডে কানেক্ট করিয়ে দেয় — আর Settings-এ গিয়ে ম্যানুয়ালি
-//         // সার্ভার URL বসাতে হয় না।
-//         pushChatIdentity(
-//           { username: identity.username, accessToken: identity.accessToken },
-//           { vtuberHttp: config.vtuberHttp, vtuberWs: config.vtuberWs },
-//         )
+    const data = (await res.json()) as { access_token: string; username: string }
+    // এখানকার কোনো এরর (যেমন device-control/chat push) যেন "লগইন ব্যর্থ" হিসেবে না
+    // দেখায় — সার্ভারে লগইন/রেজিস্ট্রেশন ইতিমধ্যেই সফল, নাহলে ইউজার আবার রেজিস্টার
+    // চাপলে "username আগে থেকেই আছে" (HTTP 400) পায়।
+    try {
+      onAuthSuccess(config, data)
+    } catch (err) {
+      console.error('[auth] onAuthSuccess failed:', err)
+      loginWindowRef?.close()
+    }
+    return { ok: true }
+  } catch (err) {
+    const e = err as Error
+    console.error(`[auth] ${path} failed:`, e)
+    const reason =
+      e.name === 'TimeoutError' || e.name === 'AbortError'
+        ? `${AUTH_TIMEOUT_MS / 1000} সেকেন্ডে সার্ভার সাড়া দেয়নি`
+        : e.message
+    return { ok: false, error: `Gateway-তে কানেক্ট করা যায়নি (${config.gatewayHttp}) — ${reason}` }
+  }
+}
 
-//         loginWindowRef?.close()
-//         return { ok: true }
-//       } catch (err) {
-//         return {
-//           ok: false,
-//           error: `Gateway-তে কানেক্ট করা যায়নি (${config.gatewayHttp}) — ${(err as Error).message}`,
-//         }
-//       }
-//     },
-//   )
-// }
+function registerIpcOnce(config: GatewayConfig & VtuberConfig): void {
+  if (ipcRegistered) return
+  ipcRegistered = true
 
-// // এই ছোট, আমাদের নিজেদের লেখা static HTML-এর ভেতরেই পুরো ফর্ম — কোনো
+  ipcMain.handle('hermes-login:submit', (_event, creds: { username: string; password: string }) =>
+    authRequest(config, '/auth/login', creds),
+  )
+  ipcMain.handle('hermes-login:register', (_event, creds: { username: string; password: string }) =>
+    authRequest(config, '/auth/register', creds),
+  )
+}
+
+// এই ছোট, আমাদের নিজেদের লেখা static HTML-এর ভেতরেই পুরো ফর্ম — কোনো
 // // রিমোট URL/স্ক্রিপ্ট লোড হয় না, তাই এই একটা উইন্ডোর জন্য nodeIntegration
 // // চালু রাখা নিরাপদ। মূল অ্যাপ উইন্ডো (window-manager.ts) এখানে ছোঁয়া
 // // হয়নি — সেটা আগের মতোই contextIsolation: true নিয়ে চলবে।
@@ -283,10 +315,11 @@
  * শুধু ওই একটা ফাইলে নিজের আসল Railway/gateway URL বসালেই হবে, কোনো কোড
  * বদলাতে হয় না)।
  */
-import { BrowserWindow, app, ipcMain } from 'electron'
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { BrowserWindow, ipcMain, net } from 'electron'
+import { readFileSync } from 'fs'
 import { deviceControlManager } from './device-control'
+import { resolveResource } from './resource-path'
+import { getDeviceId } from './device-id'
 import { loadIdentity, saveIdentity, clearIdentity, type SavedIdentity } from "./identity-store"
 import { pushChatIdentity, clearChatIdentity, type VtuberConfig } from "./chat-identity"
 
@@ -316,14 +349,13 @@ const DEFAULT_VTUBER: VtuberConfig = {
 function readHermesConfig(): GatewayConfig & VtuberConfig {
   // device-control.ts-এর resolveCommand()-এর সাথে সামঞ্জস্যপূর্ণ প্যাটার্ন:
   // প্যাকেজড বিল্ডে resourcesPath, dev-মোডে প্রজেক্ট-রুটের resources/।
-  const configPath = app.isPackaged
-    ? join(process.resourcesPath, 'hermes-config.json')
-    : join(app.getAppPath(), 'resources', 'hermes-config.json')
+  // প্যাকেজড বিল্ডে ফাইলটা app.asar.unpacked/resources/ এর ভেতরে থাকে (resource-path.ts)
+  const configPath = resolveResource('hermes-config.json')
 
   const result: GatewayConfig & VtuberConfig = { ...DEFAULT_GATEWAY, ...DEFAULT_VTUBER }
 
   try {
-    if (existsSync(configPath)) {
+    if (configPath) {
       const parsed = JSON.parse(readFileSync(configPath, 'utf8'))
       if (parsed.gatewayHttp && parsed.gatewayWs) {
         result.gatewayHttp = parsed.gatewayHttp
@@ -537,6 +569,13 @@ const LOGIN_HTML = `<!DOCTYPE html>
 
 function openLoginWindow(config: GatewayConfig & VtuberConfig): void {
   registerIpcOnce(config)
+
+  // লগইন উইন্ডো আগে থেকেই খোলা থাকলে (যেমন Logout দুইবার চাপলে) নতুন না খুলে সেটাই সামনে আনি
+  if (loginWindowRef && !loginWindowRef.isDestroyed()) {
+    loginWindowRef.show()
+    loginWindowRef.focus()
+    return
+  }
 
   loginWindowRef = new BrowserWindow({
     width: 300,

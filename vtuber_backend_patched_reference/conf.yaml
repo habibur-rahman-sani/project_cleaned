@@ -66,7 +66,7 @@ character_config:
         segment_method: 'pysbd'
         # Use MCP (Model Context Protocol) Plus to let the LLM have the ability to use tools
         # 'Plus' means that it has the ability to call tools by using OpenAI API.
-        use_mcpp: True
+        use_mcpp: False
         mcp_enabled_servers: ["time"] # Enabled MCP servers
 
       letta_agent:

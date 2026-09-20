@@ -12,7 +12,7 @@ WORKDIR /app
 # Base dependencies
 RUN apt-get update -o Acquire::Retries=5 \
  && apt-get install -y --no-install-recommends \
-      ffmpeg git curl ca-certificates \
+      ffmpeg git curl ca-certificates bzip2 \
  && rm -rf /var/lib/apt/lists/*
 
 # Install uv

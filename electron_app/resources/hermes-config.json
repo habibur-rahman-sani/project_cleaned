@@ -2,6 +2,6 @@
   "_comment_bangla": "gatewayHttp/Ws = responsible-purpose সার্ভিস (gateway)। vtuberHttp/Ws = projectcleaned সার্ভিস (vtuber)। URL বদলালে এই ফাইল আপডেট করে .exe আবার বিল্ড করতে হবে।",
   "gatewayHttp": "https://responsible-purpose-production-e6fd.up.railway.app",
   "gatewayWs": "wss://responsible-purpose-production-e6fd.up.railway.app",
-  "vtuberHttp": "https://projectcleaned-production-13e7.up.railway.app",
-  "vtuberWs": "wss://projectcleaned-production-13e7.up.railway.app"
+  "vtuberHttp": "https://projectcleaned-production-vtuber.up.railway.app",
+  "vtuberWs": "wss://projectcleaned-production-vtuber.up.railway.app"
 }

@@ -55,6 +55,7 @@ cache/*
 asset/
 models/*
 !models/piper_voice/**
+!models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/**
 src/open_llm_vtuber/tts/asset/
 src/open_llm_vtuber/tts/config/
 src/open_llm_vtuber/asr/models/*

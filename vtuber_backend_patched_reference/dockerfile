@@ -24,6 +24,15 @@ RUN uv sync --frozen --no-dev
 
 # Copy source & install project
 COPY . /app
+
+# ASR মডেল বিল্ড-টাইমেই ডাউনলোড করে বেক করা হচ্ছে —
+# রানটাইমে (বিশেষ করে persistent disk ছাড়া free hosting-এ) বারবার
+# ৯৯৯MB ডাউনলোড হওয়া এড়াতে, আর "No open ports detected" timeout এড়াতে
+RUN mkdir -p models && \
+    curl -L -o models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2 \
+    https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2 && \
+    tar -xjf models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2 -C models/ && \
+    rm models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2
 RUN uv pip install --no-deps .
 
 # Startup script

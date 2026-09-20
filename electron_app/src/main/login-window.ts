@@ -24,7 +24,6 @@ const DEFAULT_GATEWAY: GatewayConfig = {
 // ডিফল্ট পোর্ট 12393 — websocket-context.tsx-এর আগের ডিফল্টের সাথেই মেলে
 // (dev-এ vtuber ব্যাকএন্ড লোকালি setup/setup_vtuber_backend.sh দিয়ে চালালে
 // আলাদা কিছু সেট করতে হবে না)।
-javascript
 const DEFAULT_VTUBER: VtuberConfig = {
   vtuberHttp: process.env.HERMES_VTUBER_HTTP || '',
   vtuberWs: process.env.HERMES_VTUBER_WS || '',

@@ -81,7 +81,29 @@ ACTIONS_NEW = ('    "click": _input(_do_click, summarize=_summarize_click),\n'
                '    "click_by_description": _input(_do_click_by_description, summarize=lambda a, args, fg: (\n'
                '        f"click \'{(args.get(\'description\') or \'\')[:40]}\' (UI-TARS){fg}")),')
 
-TOOL_PY_EDITS = [(BACKEND_OLD, BACKEND_NEW), (HANDLER_OLD, HANDLER_NEW), (ACTIONS_OLD, ACTIONS_NEW)]
+# check_computer_use_requirements() (registry check_fn) আগে সবসময় স্থানীয় cua-driver
+# বাইনারি খুঁজত। relay ব্যাকএন্ডে (HERMES_COMPUTER_USE_BACKEND=relay) সেই বাইনারির
+# দরকার নেই — কন্ট্রোল হয় ইউজারের নিজের PC-তে চলা thin_client দিয়ে। এই চেক না
+# বদলালে headless সার্ভারে computer_use টুল platform_toolsets-এ থাকা সত্ত্বেও
+# registry থেকে বাদ পড়ে যায় (silently — মডেল কোনো এরর ছাড়াই টুল লিস্টে এটা দেখতেই পায় না)।
+CHECK_OLD = '''def check_computer_use_requirements() -> bool:
+    """macOS/Windows/Linux + cua-driver binary (or env override). `hermes computer-use doctor` names blocked checks."""
+    if sys.platform not in ("darwin", "win32", "linux"):
+        return False
+    from tools.computer_use.cua_backend_driver import cua_driver_binary_available
+    return cua_driver_binary_available()'''
+
+CHECK_NEW = '''def check_computer_use_requirements() -> bool:
+    """macOS/Windows/Linux + cua-driver binary (or env override). `hermes computer-use doctor` names blocked checks."""
+    backend_name = os.environ.get("HERMES_COMPUTER_USE_BACKEND", "cua").lower()
+    if backend_name in {"relay", "gateway-relay"}:
+        return True
+    if sys.platform not in ("darwin", "win32", "linux"):
+        return False
+    from tools.computer_use.cua_backend_driver import cua_driver_binary_available
+    return cua_driver_binary_available()'''
+
+TOOL_PY_EDITS = [(BACKEND_OLD, BACKEND_NEW), (HANDLER_OLD, HANDLER_NEW), (ACTIONS_OLD, ACTIONS_NEW), (CHECK_OLD, CHECK_NEW)]
 
 # ---------------------------------------------------------------------------
 # schema.py এডিট

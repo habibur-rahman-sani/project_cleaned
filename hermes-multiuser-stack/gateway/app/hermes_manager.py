@@ -120,10 +120,26 @@ async def _ensure_profile_exists(user_id: str) -> Path:
     return profile_home
 
 
+# Railway/Docker কনটেইনারে আগের single-user setup_all.sh কখনো চলে না, তাই
+# ~/.hermes/config.yaml থাকে না। সেক্ষেত্রে কোডের সাথে আসা এই ডিফল্ট ফাইল ব্যবহার হয়।
+_BUNDLED_DEFAULT_CONFIG = Path(__file__).resolve().parent / "default_shared_config.yaml"
+
+# Hermes সাবপ্রসেসকে এই গোপন ভ্যালুগুলো কখনো দেওয়া হয় না — Hermes-এর টুল/মডেল যেন
+# gateway-র ডাটাবেজ পাসওয়ার্ড, JWT/Fernet key পড়তে না পারে।
+_GATEWAY_SECRET_ENV = {"DATABASE_URL", "JWT_SECRET", "FERNET_KEY", "SHARED_OPENROUTER_KEY"}
+
+
+def _child_env_base() -> dict:
+    return {k: v for k, v in os.environ.items() if k.upper() not in _GATEWAY_SECRET_ENV}
+
+
 def _shared_config_path() -> Path:
     if settings.hermes_shared_config_path:
         return Path(settings.hermes_shared_config_path).expanduser()
-    return Path.home() / ".hermes" / "config.yaml"
+    user_cfg = Path.home() / ".hermes" / "config.yaml"
+    if user_cfg.exists():
+        return user_cfg
+    return _BUNDLED_DEFAULT_CONFIG
 
 
 def _load_shared_config() -> dict:
@@ -255,7 +271,7 @@ async def start_session(user_id: str) -> dict:
         await _write_user_config(profile_home, port, secret, llm["model_name"])
         relay_token = auth.create_access_token(user_id)
         env = {
-            **os.environ, **llm["env"], "HERMES_HOME": str(profile_home),
+            **_child_env_base(), **llm["env"], "HERMES_HOME": str(profile_home),
             "HERMES_COMPUTER_USE_BACKEND": "relay",
             "HERMES_RELAY_GATEWAY_URL": settings.gateway_public_url,
             "HERMES_RELAY_TOKEN": relay_token,
@@ -292,11 +308,18 @@ async def start_session(user_id: str) -> dict:
     return _session_public_view(session)
 
 
+def _public_base_url(port: int) -> str:
+    if settings.hermes_public_base:
+        # বাইরের হোস্ট (Render) থেকে gateway-র পাবলিক URL দিয়ে — routes/hermes_proxy.py
+        return f"{settings.hermes_public_base.rstrip('/')}/hermes/{port}/v1"
+    return f"http://{settings.hermes_advertise_host}:{port}/v1"
+
+
 def _session_public_view(session: dict) -> dict:
     return {
         "session_id": str(session["id"]),
         "status": session["status"],
-        "base_url": f"http://{settings.hermes_advertise_host}:{session['port']}/v1",
+        "base_url": _public_base_url(session["port"]),
         "api_key": session["api_secret"],
     }
 

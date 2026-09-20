@@ -95,6 +95,15 @@ async def get_active_session(user_id: str):
     return dict(row) if row else None
 
 
+async def get_active_session_by_port(port: int):
+    pool = get_pool()
+    row = await pool.fetchrow(
+        "SELECT * FROM hermes_sessions WHERE port = $1 AND status IN ('starting','running')",
+        port,
+    )
+    return dict(row) if row else None
+
+
 async def get_used_ports() -> set[int]:
     pool = get_pool()
     rows = await pool.fetch(

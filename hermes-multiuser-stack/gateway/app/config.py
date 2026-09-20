@@ -52,6 +52,14 @@ class Settings(BaseSettings):
     #   থাকলে আগের আচরণই বজায় থাকে।
     hermes_advertise_host: str = "127.0.0.1"
 
+    # vtuber ব্যাকএন্ড যদি অন্য কোম্পানির হোস্টে থাকে (যেমন Render) তাহলে Railway-র
+    # ভেতরের 127.0.0.1:<পোর্ট> সে কখনো ধরতে পারবে না। এই ভেরিয়েবলে gateway-র নিজের
+    # পাবলিক URL দিলে (https://....up.railway.app, শেষে / ছাড়া) /vtuber/resolve
+    # base_url হিসেবে "<এই URL>/hermes/<পোর্ট>/v1" ফেরত দেয়, আর gateway নিজেই
+    # (routes/hermes_proxy.py) সেই রিকোয়েস্ট ভেতরের Hermes-এ পৌঁছে দেয়।
+    # ফাঁকা থাকলে আগের আচরণ (hermes_advertise_host) বজায় থাকে।
+    hermes_public_base: str = ""
+
     port_range_start: int = 20000
     port_range_end: int = 29000
     idle_timeout_minutes: int = 20              # এতক্ষণ নিষ্ক্রিয় থাকলে প্রসেস বন্ধ করে রিসোর্স ছেড়ে দেয়

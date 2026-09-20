@@ -1,0 +1,15 @@
+# Railway/Docker-এ ব্যবহার হওয়া ডিফল্ট "শেয়ার্ড" Hermes কনফিগ।
+# hermes_manager.py প্রতিটা ইউজারের profile বানানোর সময় এটাকে ভিত্তি ধরে, তারপর
+# শুধু port / api key / model ওভাররাইড করে (দেখো _build_user_config)।
+#
+# নিজের আলাদা কনফিগ চাইলে Railway Variables-এ HERMES_SHARED_CONFIG_PATH দাও।
+
+model:
+  provider: openrouter        # OPENROUTER_API_KEY env var থেকে key নেয়
+
+# ⚠️ এটা পাবলিক মাল্টি-ইউজার সার্ভার। hermes-api-server-এর ডিফল্ট টুলসেটে terminal,
+# file লেখা, execute_code আছে — সেগুলো চালু রাখলে যেকোনো ইউজার চ্যাট থেকে Railway
+# সার্ভারেই কমান্ড চালাতে পারত। তাই এখানে স্পষ্টভাবে শুধু নিরাপদ টুলগুলো দেওয়া হলো।
+# computer_use = ইউজারের নিজের পিসিতে (thin client হয়ে) কাজ করা টুল; সার্ভারে নয়।
+platform_toolsets:
+  api_server: [web, vision, todo, memory, computer_use]

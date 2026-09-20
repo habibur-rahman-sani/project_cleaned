@@ -15,7 +15,7 @@ from loguru import logger
 
 from .multiuser_history_override import set_current_user_id
 
-GATEWAY_URL = os.environ.get("HERMES_GATEWAY_URL", "https://responsible-purpose-production-e6fd.up.railway.app")
+GATEWAY_URL = os.environ.get("HERMES_GATEWAY_URL", "http://127.0.0.1:8642")
 
 
 async def resolve_user_llm(token: str) -> dict | None:

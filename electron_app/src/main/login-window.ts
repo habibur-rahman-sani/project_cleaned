@@ -15,8 +15,8 @@ interface GatewayConfig {
 // টেস্টের জন্য সুবিধাজনক, কিন্তু production build-এ অবশ্যই hermes-config.json
 // এ আসল URL বসিয়ে দিতে হবে)।
 const DEFAULT_GATEWAY: GatewayConfig = {
-  gatewayHttp: 'https://responsible-purpose-production-e6fd.up.railway.app',
-  gatewayWs: 'wss://responsible-purpose-production-e6fd.up.railway.app',
+  gatewayHttp: process.env.HERMES_GATEWAY_HTTP || '',
+  gatewayWs: process.env.HERMES_GATEWAY_WS || '',
 }
 
 // vtuber (চ্যাট/ভয়েস/অ্যাভাটার) ব্যাকএন্ড gateway-র থেকে আলাদা সার্ভিস —
@@ -24,9 +24,10 @@ const DEFAULT_GATEWAY: GatewayConfig = {
 // ডিফল্ট পোর্ট 12393 — websocket-context.tsx-এর আগের ডিফল্টের সাথেই মেলে
 // (dev-এ vtuber ব্যাকএন্ড লোকালি setup/setup_vtuber_backend.sh দিয়ে চালালে
 // আলাদা কিছু সেট করতে হবে না)।
+javascript
 const DEFAULT_VTUBER: VtuberConfig = {
-  vtuberHttp: 'https://projectcleaned-production-13e7.up.railway.app',
-  vtuberWs: 'wss://projectcleaned-production-13e7.up.railway.app',
+  vtuberHttp: process.env.HERMES_VTUBER_HTTP || '',
+  vtuberWs: process.env.HERMES_VTUBER_WS || '',
 }
 
 function readHermesConfig(): GatewayConfig & VtuberConfig {
@@ -50,8 +51,9 @@ function readHermesConfig(): GatewayConfig & VtuberConfig {
         result.vtuberWs = parsed.vtuberWs
       }
     }
-  } catch {
+  } catch (err) {
     // পার্স/রিড ব্যর্থ হলে ডিফল্টেই থেকে যাবে
+        console.error('⚠️ hermes-config.json পড়া যায়নি! ডিফল্ট (সম্ভবত খালি) ভ্যালু ব্যবহার হচ্ছে:', err)
   }
   return result
 }

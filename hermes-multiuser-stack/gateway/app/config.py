@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     # --- অ্যাকাউন্ট সীমা (টাকা-পয়সা/শেয়ার্ড LLM key-র অপব্যবহার ঠেকাতে) ---
     # এক কম্পিউটার (Electron অ্যাপের device_id) থেকে সর্বোচ্চ কতগুলো অ্যাকাউন্ট রেজিস্টার করা যাবে।
     # 1 = কঠোর "এক কম্পিউটার এক অ্যাকাউন্ট"। env: MAX_ACCOUNTS_PER_DEVICE
-    max_accounts_per_device: int = 3
+    max_accounts_per_device: int = 30
     # true হলে device_id ছাড়া রেজিস্ট্রেশন বাতিল (শুধু অ্যাপ থেকেই রেজিস্টার করা যাবে)।
     # ওয়েব টেস্ট পেজ (static/index.html) থেকে রেজিস্টার করতে চাইলে REQUIRE_DEVICE_ID=false দাও।
     require_device_id: bool = False

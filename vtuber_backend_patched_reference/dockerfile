@@ -21,6 +21,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 # Install deps (cache-friendly)
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
+RUN uv pip install faster-whisper
 
 # Copy source & install project
 COPY . /app

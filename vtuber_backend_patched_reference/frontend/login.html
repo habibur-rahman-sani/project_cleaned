@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<title>Hermes লগইন</title>
+<style>
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, "Segoe UI", sans-serif; background: #111318; color: #eee;
+  }
+  .card { width: 300px; padding: 24px; background: #1a1d24; border-radius: 14px; }
+  h2 { font-size: 18px; margin: 0 0 16px; text-align: center; font-weight: 600; }
+  input {
+    width: 100%; box-sizing: border-box; padding: 11px 14px; margin-bottom: 12px; border-radius: 8px;
+    border: 1px solid #333; background: #1c1f26; color: #eee; font-size: 14px;
+  }
+  input:focus { outline: 1px solid #4f7cff; }
+  button {
+    width: 100%; padding: 11px; border-radius: 8px; border: none; background: #4f7cff; color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  #err { color: #ff6b6b; font-size: 13px; min-height: 18px; margin-bottom: 8px; text-align: center; }
+  #toggle {
+    display: block; text-align: center; margin-top: 14px; font-size: 13px; color: #8ab4ff;
+    cursor: pointer; text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2 id="title">Hermes লগইন</h2>
+    <div id="err"></div>
+    <input id="username" placeholder="Username" autocomplete="username" />
+    <input id="password" placeholder="Password (কমপক্ষে ৮ অক্ষর)" type="password" autocomplete="current-password" />
+    <button id="submit">লগইন করো</button>
+    <span id="toggle">অ্যাকাউন্ট নেই? নতুন অ্যাকাউন্ট বানাও</span>
+  </div>
+
+<script>
+  // ⚠️ এই দুটো URL তোমার নিজের Railway ডিপ্লয়মেন্টের সাথে মিলিয়ে নাও।
+  // এগুলো ঠিক electron_app/resources/hermes-config.json-এ যা আছে তার সমান হওয়া উচিত।
+  const GATEWAY_HTTP = "https://responsible-purpose-production-e6fd.up.railway.app";
+  const VTUBER_HTTP  = "https://projectcleaned-production-13e7.up.railway.app";
+  const VTUBER_WS    = "wss://projectcleaned-production-13e7.up.railway.app";
+
+  const errEl = document.getElementById('err');
+  const titleEl = document.getElementById('title');
+  const btn = document.getElementById('submit');
+  const toggleEl = document.getElementById('toggle');
+  const uEl = document.getElementById('username');
+  const pEl = document.getElementById('password');
+
+  let mode = 'login'; // 'login' | 'register'
+
+  function applyMode() {
+    errEl.textContent = '';
+    if (mode === 'login') {
+      titleEl.textContent = 'Hermes লগইন';
+      btn.textContent = 'লগইন করো';
+      toggleEl.textContent = 'অ্যাকাউন্ট নেই? নতুন অ্যাকাউন্ট বানাও';
+    } else {
+      titleEl.textContent = 'নতুন অ্যাকাউন্ট';
+      btn.textContent = 'রেজিস্টার করো';
+      toggleEl.textContent = 'আগে থেকেই অ্যাকাউন্ট আছে? লগইন করো';
+    }
+  }
+
+  toggleEl.addEventListener('click', () => {
+    mode = mode === 'login' ? 'register' : 'login';
+    applyMode();
+  });
+
+  async function submit() {
+    const username = uEl.value.trim();
+    const password = pEl.value;
+    if (!username || !password) {
+      errEl.textContent = 'Username আর password দুটোই দাও';
+      return;
+    }
+    if (mode === 'register' && password.length < 8) {
+      errEl.textContent = 'Password কমপক্ষে ৮ অক্ষরের হতে হবে';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = mode === 'login' ? 'লগইন হচ্ছে...' : 'রেজিস্টার হচ্ছে...';
+    errEl.textContent = '';
+
+    const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
+
+    try {
+      const res = await fetch(GATEWAY_HTTP + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!res.ok) {
+        let msg = res.status === 401 ? 'ভুল username অথবা password' : `সার্ভার এরর (HTTP ${res.status})`;
+        try {
+          const body = await res.json();
+          if (body.detail) msg = body.detail;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+
+      const data = await res.json(); // { access_token, username, ... }
+
+      // ---- এখানেই আসল "জোড়া লাগানো" হচ্ছে ----
+      // vtuber backend-এর websocket route ?token=... চায় (websocket_handler.py দ্রষ্টব্য),
+      // আর frontend-এর useLocalStorage হুক wsUrl/baseUrl কে JSON.stringify করে রাখে —
+      // তাই এখানেও একইভাবে JSON.stringify করে বসাতে হবে, নাহলে index.html এটা পড়তে পারবে না।
+      const wsUrlWithToken = VTUBER_WS + "/client-ws?token=" + encodeURIComponent(data.access_token);
+
+      localStorage.setItem('wsUrl', JSON.stringify(wsUrlWithToken));
+      localStorage.setItem('baseUrl', JSON.stringify(VTUBER_HTTP));
+
+      // লগআউট বাটনের জন্য আলাদা করে টোকেন/ইউজারনেমও রেখে দিচ্ছি
+      localStorage.setItem('hermes_token', data.access_token);
+      localStorage.setItem('hermes_username', data.username || username);
+
+      // মূল অ্যাভাটার/চ্যাট অ্যাপে নিয়ে যাচ্ছে
+      window.location.href = './index.html';
+
+    } catch (err) {
+      errEl.textContent = err.message || 'কিছু একটা ভুল হয়েছে';
+      btn.disabled = false;
+      applyMode();
+    }
+  }
+
+  btn.addEventListener('click', submit);
+  pEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  uEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') pEl.focus(); });
+
+  applyMode();
+  uEl.focus();
+</script>
+</body>
+</html>

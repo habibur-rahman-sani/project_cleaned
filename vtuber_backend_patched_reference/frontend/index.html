@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Open-LLM-Vtuber</title>
+
+    <!-- ---- লগইন গার্ড: React অ্যাপ লোড হওয়ার আগেই চেক করে ---- -->
+    <script>
+      (function () {
+        var raw = localStorage.getItem('wsUrl');
+        var wsUrl = null;
+        try { wsUrl = raw ? JSON.parse(raw) : null; } catch (e) { wsUrl = null; }
+
+        // wsUrl-এ ?token=... না থাকলে মানে ইউজার লগইন করেনি (বা টোকেন মুছে গেছে) —
+        // সরাসরি লগইন পেজে পাঠিয়ে দাও, React অ্যাপ লোডই হতে দেবে না
+        if (!wsUrl || wsUrl.indexOf('token=') === -1) {
+          window.location.replace('./login.html');
+        }
+      })();
+    </script>
+
+    <script type="module" crossorigin src="./assets/main-CKgUHFa9.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/main-QEkl09-0.css">
+
+    <style>
+      #hermes-logout-btn {
+        position: fixed; top: 12px; right: 12px; z-index: 99999;
+        padding: 7px 14px; font-size: 12px; font-family: -apple-system, "Segoe UI", sans-serif;
+        background: #1c1f26; color: #eee; border: 1px solid #333; border-radius: 8px;
+        cursor: pointer; opacity: 0.75;
+      }
+      #hermes-logout-btn:hover { opacity: 1; }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <!-- ---- লগআউট বাটন: React-এর বাইরে, স্বাধীনভাবে বসানো ---- -->
+    <button id="hermes-logout-btn">লগআউট</button>
+    <script>
+      document.getElementById('hermes-logout-btn').addEventListener('click', function () {
+        localStorage.removeItem('wsUrl');
+        localStorage.removeItem('baseUrl');
+        localStorage.removeItem('hermes_token');
+        localStorage.removeItem('hermes_username');
+        window.location.href = './login.html';
+      });
+    </script>
+  </body>
+</html>

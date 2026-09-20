@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     max_accounts_per_device: int = 3
     # true হলে device_id ছাড়া রেজিস্ট্রেশন বাতিল (শুধু অ্যাপ থেকেই রেজিস্টার করা যাবে)।
     # ওয়েব টেস্ট পেজ (static/index.html) থেকে রেজিস্টার করতে চাইলে REQUIRE_DEVICE_ID=false দাও।
-    require_device_id: bool = True
+    require_device_id: bool = False
 
     gateway_public_url: str = ""
     cors_origins: str = "*"

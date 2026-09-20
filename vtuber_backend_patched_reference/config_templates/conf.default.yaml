@@ -173,7 +173,7 @@ character_config:
   # === Automatic Speech Recognition ===
   asr_config:
     # speech to text model options: 'faster_whisper', 'whisper_cpp', 'whisper', 'azure_asr', 'fun_asr', 'groq_whisper_asr', 'sherpa_onnx_asr'
-    asr_model: 'sherpa_onnx_asr'
+    asr_model: 'faster_whisper'
 
     azure_asr:
       api_key: 'azure_api_key'
@@ -182,12 +182,12 @@ character_config:
 
     # Faster whisper config
     faster_whisper:
-      model_path: 'large-v3-turbo' # model path, name, or id from hf hub
+      model_path: 'tiny' # ছোট মডেল — 512MB RAM-এ চলার জন্য (large-v3-turbo অনেক ভারী ছিল)
       download_root: 'models/whisper'
-      language: 'en' # en, zh, or something else. put nothing for auto-detect.
-      device: 'auto' # cpu, cuda, or auto. faster-whisper doesn't support mps
+      language: '' # ফাঁকা = auto-detect, যাতে বাংলা ও ইংরেজি দুটোই ধরতে পারে
+      device: 'cpu'
       compute_type: 'int8'
-      prompt: '' # You can put a prompt here to help the model understand the context of the audio
+      prompt: ''
 
     whisper_cpp:
       # all available models are listed on https://abdeladim-s.github.io/pywhispercpp/#pywhispercpp.constants.AVAILABLE_MODELS

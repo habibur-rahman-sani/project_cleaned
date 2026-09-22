@@ -31,7 +31,9 @@ class Settings(BaseSettings):
 
     # --- Hermes প্রসেস ম্যানেজমেন্ট ---
     hermes_bin: str = "hermes"                 # PATH-এ hermes কমান্ড থাকতে হবে (host মেশিনে)
-    hermes_start_args: str = "gateway run --replace"
+    # hermes_start_args: str = "gateway run --replace"
+    hermes_start_args: str = "gateway run --replace --force"
+
     hermes_sessions_dir: str = "/data/hermes-sessions"   # আর ব্যবহার হয় না (দেখো hermes_home_root) —
                                                           # ব্যাক-কম্প্যাটিবিলিটির জন্য রাখা আছে
     hermes_home_root: str = "/data/hermes-home"          # আসল per-user isolation root:

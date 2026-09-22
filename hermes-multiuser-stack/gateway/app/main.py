@@ -14,6 +14,7 @@ from .routes import sessions as session_routes
 from .routes import vtuber as vtuber_routes
 from .routes import device as device_routes
 from .routes import hermes_proxy as hermes_proxy_routes
+from .routes import approvals as approval_routes
 
 _reaper_task: asyncio.Task | None = None
 
@@ -44,6 +45,7 @@ app.include_router(session_routes.router)
 app.include_router(vtuber_routes.router)
 app.include_router(device_routes.router)
 app.include_router(hermes_proxy_routes.router)
+app.include_router(approval_routes.router)
 
 
 @app.get("/health")

@@ -4,8 +4,8 @@
   "type": "git",
   "url": "https://github.com/habibur-rahman-sani/project_cleaned.git"
 },
-  "version": "1.2.4",
-  "description": "An Electron application with React and TypeScript 1.2.4 for noor Agent",
+  "version": "1.2.5",
+  "description": "An Electron application with React and TypeScript 1.2.5 for noor Agent",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",

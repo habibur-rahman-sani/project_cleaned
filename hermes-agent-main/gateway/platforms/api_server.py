@@ -27,6 +27,47 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# ---------------- Multi-user approval callback ----------------
+# CLI মোডে (cli.py) টার্মিনালে y/n জিজ্ঞেস করে approval নেয়। api_server মোডে
+# (এই ফাইল, multi-user সিস্টেম যেটা ব্যবহার করে) কোনো টার্মিনাল নেই — তাই আগে
+# কোনো callback রেজিস্টার করা ছিল না, আর tool.py-র _request_approval()
+# callback None পেলে auto-approve করে দিত (দেখো: "No CLI approval wired ->
+# default allow")। এই ফাংশনটাই এখন সেই ফাঁকটা পূরণ করে: gateway-তে একটা
+# "pending approval" রেখে ইউজারের চ্যাট UI থেকে বোতাম চাপার জন্য অপেক্ষা করে।
+def _gateway_approval_callback(action: str, args: dict, summary: str) -> str:
+    """রিটার্ন করে: "approve_once" | "approve_session" | "always_approve" |
+    "deny" | "timeout" — এই ৪+১ ভ্যালুই tool.py-র _request_approval() বোঝে।"""
+    gateway_url = os.environ.get("HERMES_RELAY_GATEWAY_URL", "")
+    token = os.environ.get("HERMES_RELAY_TOKEN", "")
+    if not gateway_url or not token:
+        # relay কনফিগ না থাকলে (যেমন কেউ লোকালি টেস্ট করছে, multi-user সিস্টেমের
+        # বাইরে) ব্লক করে দেওয়ার কোনো মানে নেই — তাই এখানে allow করে দেওয়া হলো।
+        return "approve_once"
+    try:
+        import requests as _requests
+        resp = _requests.post(
+            f"{gateway_url}/approvals",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"action": action, "summary": summary},
+            timeout=125.0,  # গেটওয়ে নিজে ১২০ সেকেন্ড wait করে, +৫ বাফার
+        )
+        resp.raise_for_status()
+        return resp.json().get("decision", "timeout")
+    except Exception:
+        return "deny"  # নেটওয়ার্ক সমস্যা হলে নিরাপদ দিক বেছে নাও: deny, allow না
+
+
+def _register_gateway_approval_callback() -> None:
+    try:
+        from tools.computer_use.tool import set_approval_callback
+        set_approval_callback(_gateway_approval_callback)
+    except Exception:
+        pass  # computer_use tool মডিউল না থাকলে (পুরনো checkout ইত্যাদি) চুপচাপ স্কিপ
+
+
+_register_gateway_approval_callback()
+
+
 # _resolve_request_profile result for a /p/<profile>/ prefix this gateway does not serve (-> 404);
 # distinct from None (no prefix / multiplexing off -> default profile).
 _PROFILE_REJECTED = object()
@@ -94,6 +135,7 @@ _CAPABILITY_ENDPOINTS = (
     ("session_chat", ("POST", "/api/sessions/{session_id}/chat")),
     ("session_chat_stream", ("POST", "/api/sessions/{session_id}/chat/stream")),
     ("session_model_lock", ("POST", "/api/sessions/{session_id}/model")),
+    ("session_interrupt", ("POST", "/api/sessions/{session_id}/interrupt")),  # ⬅️ নতুন — Stop বোতাম
     ("browser_control_register", ("POST", "/v1/browser-control/register")),
     ("browser_control_ws", ("GET", "/v1/browser-control/ws")),
     ("artifact_upload", ("POST", "/v1/artifacts/upload")),
@@ -1532,6 +1574,7 @@ class APIServerAdapter(OpenAICompatRoutesMixin, BasePlatformAdapter):
             ("POST", "/api/sessions/{session_id}/chat", self._handle_session_chat),
             ("POST", "/api/sessions/{session_id}/chat/stream", self._handle_session_chat_stream),
             ("POST", "/api/sessions/{session_id}/model", self._handle_session_model_lock),
+            ("POST", "/api/sessions/{session_id}/interrupt", self._handle_interrupt_session),  # ⬅️ নতুন
             ("POST", "/v1/chat/completions", self._handle_chat_completions),
             ("POST", "/v1/responses", self._handle_responses),
             ("GET", "/v1/responses/{response_id}", self._handle_get_response),
@@ -3260,6 +3303,35 @@ class APIServerAdapter(OpenAICompatRoutesMixin, BasePlatformAdapter):
             model_lock="accepted")
         return web.json_response(
             {"object": "hermes.session.model_lock", "session_id": session_id, "runtime": runtime})
+
+    async def _handle_interrupt_session(self, request: "web.Request") -> "web.Response":
+        """POST /api/sessions/{session_id}/interrupt — চ্যাট UI-এর "Stop" বোতাম।
+        চলমান agent খুঁজে তার execution thread-কে interrupt flag দেয়; এরপর
+        tools/environments/base.py-এর _wait_for_process() নিজে থেকেই সেটা
+        ধরে প্রসেস kill করে (RelayEnvironment হলে thin_client-কেও kill_command
+        পাঠায়, tools/environments/relay.py-এর cancel_fn-এর মাধ্যমে)।"""
+        session_id = request.match_info["session_id"]
+        _, err = await self._get_existing_session_or_404(session_id)
+        if err:
+            return err
+
+        from tools.interrupt import set_interrupt
+        matched = None
+        for agent in self._active_run_agents.values():
+            if getattr(agent, "session_id", None) == session_id:
+                matched = agent
+                break
+        if matched is None:
+            return web.json_response(
+                {"ok": False, "message": "এই session-এ এখন কিছু চলছে না"}, status=404)
+
+        tid = getattr(matched, "_execution_thread_id", None)
+        if tid is None:
+            return web.json_response(
+                {"ok": False, "message": "থ্রেড আইডি পাওয়া যায়নি"}, status=409)
+
+        set_interrupt(True, tid, reason="user_stop_button")
+        return web.json_response({"ok": True, "message": "থামানোর সিগন্যাল পাঠানো হয়েছে"})
 
     # -- Cron jobs API ----------------------------------------------------------------
 

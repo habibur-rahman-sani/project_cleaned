@@ -451,12 +451,14 @@ PyInstaller টার্গেট প্ল্যাটফর্মেই চা
 from __future__ import annotations
 
 import asyncio
+import asyncio
 import base64
 import io
 import json
 import os
 import platform
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -729,6 +731,109 @@ def _ping(_params: dict) -> dict:
     return {"ok": True, "message": "pong"}
 
 
+# ---------------- টার্মিনাল/ফাইল হ্যান্ডলার (terminal, file, execute_code টুলের জন্য) ----------------
+# hermes-agent-main/tools/environments/relay.py এই action গুলো কল করে।
+# job_id দিয়ে চলমান প্রসেস ট্র্যাক করা হয়, যাতে run_command চলা অবস্থায়
+# একই সাথে kill_command পাঠানো যায় (নিচের run_forever()-এর task-based
+# পরিবর্তনটাই এটা সম্ভব করে — নাহলে একটা ব্লকিং কল অন্যটাকে আটকে রাখত)।
+
+_RUNNING_JOBS: dict[str, subprocess.Popen] = {}
+_JOBS_LOCK = threading.Lock()
+
+
+def _run_command(params: dict) -> dict:
+    command = params.get("command", "")
+    cwd = params.get("cwd") or None
+    timeout = params.get("timeout", 120)
+    job_id = params.get("job_id", "")
+    if not command:
+        return {"ok": False, "message": "command খালি", "returncode": 1}
+    try:
+        proc = subprocess.Popen(
+            command, shell=True, cwd=cwd,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+            encoding="utf-8", errors="replace",
+        )
+    except Exception as e:
+        return {"ok": False, "message": f"শুরু করা যায়নি: {e}", "returncode": 1}
+
+    if job_id:
+        with _JOBS_LOCK:
+            _RUNNING_JOBS[job_id] = proc
+    try:
+        output, _ = proc.communicate(timeout=timeout)
+        return {"ok": True, "output": output or "", "returncode": proc.returncode}
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        output, _ = proc.communicate()
+        return {"ok": False, "output": (output or "") + "\n[timeout]", "returncode": 124,
+                "message": f"{timeout}s পরে টাইমআউট"}
+    finally:
+        if job_id:
+            with _JOBS_LOCK:
+                _RUNNING_JOBS.pop(job_id, None)
+
+
+def _kill_command(params: dict) -> dict:
+    job_id = params.get("job_id", "")
+    with _JOBS_LOCK:
+        proc = _RUNNING_JOBS.get(job_id)
+    if proc is None:
+        return {"ok": False, "message": "এই job_id-তে কোনো চলমান কমান্ড নেই"}
+    try:
+        proc.kill()
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "message": str(e)}
+
+
+def _read_file(params: dict) -> dict:
+    path = params.get("path", "")
+    try:
+        offset = int(params.get("offset", 1))
+        limit = int(params.get("limit", 2000))
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+        lines = text.splitlines()
+        selected = lines[max(offset - 1, 0):max(offset - 1, 0) + limit]
+        return {"ok": True, "content": "\n".join(selected), "total_lines": len(lines)}
+    except FileNotFoundError:
+        return {"ok": False, "message": f"ফাইল পাওয়া যায়নি: {path}"}
+    except Exception as e:
+        return {"ok": False, "message": str(e)}
+
+
+def _write_file(params: dict) -> dict:
+    path = params.get("path", "")
+    content = params.get("content", "")
+    append = bool(params.get("append", False))
+    try:
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        mode = "a" if append else "w"
+        with open(p, mode, encoding="utf-8") as f:
+            f.write(content)
+        return {"ok": True, "message": f"লেখা হয়েছে: {path}"}
+    except Exception as e:
+        return {"ok": False, "message": str(e)}
+
+
+def _list_dir(params: dict) -> dict:
+    path = params.get("path", ".")
+    try:
+        entries = []
+        for entry in Path(path).iterdir():
+            entries.append({
+                "name": entry.name,
+                "is_dir": entry.is_dir(),
+                "size": entry.stat().st_size if entry.is_file() else 0,
+            })
+        return {"ok": True, "entries": entries}
+    except FileNotFoundError:
+        return {"ok": False, "message": f"পথ পাওয়া যায়নি: {path}"}
+    except Exception as e:
+        return {"ok": False, "message": str(e)}
+
+
 HANDLERS = {
     "screenshot": _screenshot,
     "click": _click,
@@ -740,6 +845,11 @@ HANDLERS = {
     "list_apps": _list_apps,
     "focus_app": _focus_app,
     "ping": _ping,
+    "run_command": _run_command,
+    "kill_command": _kill_command,
+    "read_file": _read_file,
+    "write_file": _write_file,
+    "list_dir": _list_dir,
 }
 
 
@@ -792,14 +902,22 @@ async def run_forever(token: str, controller: IndicatorController) -> None:
                 backoff = 2  # কানেক্ট হলে backoff রিসেট
                 if SIDECAR_MODE:
                     _sidecar_log("connected", device_name=device_name)
+                async def _handle_one(msg: dict) -> None:
+                    # run_in_executor: থ্রেড পুলে চালায়, তাই দীর্ঘ run_command
+                    # চলা অবস্থাতেও এই একই websocket loop অন্য মেসেজ (যেমন
+                    # kill_command) সাথে সাথে গ্রহণ করতে পারে — আটকে থাকে না।
+                    loop = asyncio.get_event_loop()
+                    result = await loop.run_in_executor(
+                        None, dispatch, msg["action"], msg.get("params", {}), controller)
+                    await ws.send(json.dumps({
+                        "type": "result", "request_id": msg["request_id"], "payload": result,
+                    }))
+
                 async for raw in ws:
                     msg = json.loads(raw)
                     if msg.get("type") != "command":
                         continue
-                    result = dispatch(msg["action"], msg.get("params", {}), controller)
-                    await ws.send(json.dumps({
-                        "type": "result", "request_id": msg["request_id"], "payload": result,
-                    }))
+                    asyncio.create_task(_handle_one(msg))
             # async for এখানে *স্বাভাবিকভাবেও* শেষ হতে পারে (exception ছাড়াই) —
             # যেমন device_registry.py-র "replaced by new connection" লজিকে সার্ভার
             # পরিষ্কারভাবে বন্ধ করলে। আগে এই path-এ কোনো sleep ছিল না, ফলে দুইটা

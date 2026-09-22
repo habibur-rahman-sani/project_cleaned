@@ -179,6 +179,15 @@ def _build_user_config(base: dict, port: int, secret: str, workdir: Path, model_
     if model_name:
         data.setdefault("model", {})
         data["model"]["default"] = model_name
+    # ⬇️ নতুন — chat/completions-এও terminal/execute_code-এর dangerous-command
+    #    approval আমাদের gateway /approvals পপ-আপে ব্রিজ করে (দেখো
+    #    hermes-agent-main/plugins/gateway-approval-bridge/__init__.py-এর
+    #    উপরের বড় ডকস্ট্রিং — এটা ছাড়া শুধু computer_use popup কাজ করত,
+    #    terminal কমান্ড চুপচাপ block/pending হয়ে যেত)।
+    data.setdefault("plugins", {})
+    enabled = data["plugins"].setdefault("enabled", [])
+    if "gateway-approval-bridge" not in enabled:
+        enabled.append("gateway-approval-bridge")
     return data
 
 
@@ -275,6 +284,10 @@ async def start_session(user_id: str) -> dict:
             "HERMES_COMPUTER_USE_BACKEND": "relay",
             "HERMES_RELAY_GATEWAY_URL": settings.gateway_public_url,
             "HERMES_RELAY_TOKEN": relay_token,
+            # ⬇️ নতুন — টার্মিনাল/ফাইল/code_execution টুলকেও বলে দেয় "ইউজারের
+            #    পিসিতে চলো"। computer_use-এর মতোই একই relay_token/gateway_url
+            #    reuse হচ্ছে — user_id-ভিত্তিক isolation তাই এখানেও বজায় থাকে।
+            "TERMINAL_ENV": "relay",
         }
         args = settings.hermes_start_args.split()
         (profile_home / "logs").mkdir(parents=True, exist_ok=True)

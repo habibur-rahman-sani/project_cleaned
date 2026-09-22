@@ -16,6 +16,9 @@ from tools.environments.managed_modal import ManagedModalEnvironment as _Managed
 from tools.environments.modal import ModalEnvironment as _ModalEnvironment
 from tools.environments.singularity import SingularityEnvironment as _SingularityEnvironment
 from tools.environments.ssh import SSHEnvironment as _SSHEnvironment
+# ⬇️ নতুন — computer_use-এর relay_backend.py-এর মতোই, কিন্তু terminal/file/
+#    code_execution-এর জন্য। এটাই ইউজারের পিসিতে কমান্ড পাঠানোর আসল যন্ত্র।
+from tools.environments.relay import RelayEnvironment as _RelayEnvironment
 from tools.managed_tool_gateway import is_managed_tool_gateway_ready
 from tools.terminal_tool_config import _get_plugin_env_provider
 from tools.tool_backend_helpers import (has_direct_modal_credentials, managed_nous_tools_enabled,
@@ -180,6 +183,13 @@ def _build_ssh_env(*, cwd, timeout, ssh_config, probe_only=False, **_):
                            key_path=ssh_config.get("key", ""), cwd=cwd, timeout=timeout, probe_only=probe_only)
 
 
+def _build_relay_env(*, cwd, timeout, **_):
+    # ⬇️ TERMINAL_ENV=relay সেট থাকলে এটাই কল হয়। cwd/timeout ছাড়া আর কোনো
+    #    কনফিগ লাগে না, কারণ কোন ইউজারের কোন পিসি সেটা HERMES_RELAY_TOKEN
+    #    (env var, hermes_manager.py সেট করে) থেকেই বোঝা যায়।
+    return _RelayEnvironment(cwd=cwd, timeout=timeout)
+
+
 def _build_plugin_env(*, env_type, image, cwd, timeout, cc, task_id, **_):
     provider = _get_plugin_env_provider(env_type)
     if provider is not None:
@@ -204,7 +214,8 @@ def _build_plugin_env(*, env_type, image, cwd, timeout, cc, task_id, **_):
 # Built-in backend -> builder. Anything else is looked up in the plugin registry.
 _ENV_BUILDERS = {"local": _build_local_env, "docker": _build_docker_env, "singularity": _build_singularity_env,
                  "modal": _build_modal_env, "daytona": _build_daytona_env, "vercel_sandbox": _build_vercel_env,
-                 "ssh": _build_ssh_env}
+                 "ssh": _build_ssh_env,
+                 "relay": _build_relay_env}  # ⬅️ নতুন — এখন TERMINAL_ENV=relay চেনা যাবে
 
 
 def _create_environment(env_type: str, image: str, cwd: str, timeout: int,

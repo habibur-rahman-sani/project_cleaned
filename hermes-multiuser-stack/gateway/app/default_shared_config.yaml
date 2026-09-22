@@ -12,4 +12,7 @@ model:
 # সার্ভারেই কমান্ড চালাতে পারত। তাই এখানে স্পষ্টভাবে শুধু নিরাপদ টুলগুলো দেওয়া হলো।
 # computer_use = ইউজারের নিজের পিসিতে (thin client হয়ে) কাজ করা টুল; সার্ভারে নয়।
 platform_toolsets:
-  api_server: [web, vision, todo, memory, computer_use]
+  # ⬇️ terminal, file, code_execution যোগ হলো — এই তিনটাই এখন
+  #    TERMINAL_ENV=relay-এর কারণে ইউজারের পিসিতে চলবে, সার্ভারে না।
+  #    (terminal = terminal+process_manage, file = read/write/search/patch)
+  api_server: [web, vision, todo, memory, computer_use, terminal, file, code_execution]

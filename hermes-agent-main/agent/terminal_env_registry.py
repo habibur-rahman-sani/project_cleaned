@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 BUILTIN_BACKEND_NAMES = frozenset({
     "local", "docker", "singularity", "modal", "managed_modal",
     "daytona", "vercel_sandbox", "ssh",
+    "relay",  # ⬅️ নতুন — ইউজারের নিজের পিসিতে চালানোর জন্য
 })
 
 
